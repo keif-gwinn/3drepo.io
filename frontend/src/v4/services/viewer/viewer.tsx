@@ -24,7 +24,7 @@ import {
 	VIEWER_NAV_MODES,
 	VIEWER_PROJECTION_MODES
 } from '../../constants/viewer';
-import { UnityUtil } from '../../globals/unity-util';
+import { UnityUtil } from '../../../globals/unity-util';
 import { asyncTimeout } from '../../helpers/aync';
 import { DialogActions } from '../../modules/dialog';
 import { dispatch, getState } from '../../modules/store';

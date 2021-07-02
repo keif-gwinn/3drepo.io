@@ -7,14 +7,14 @@ import { Provider } from 'react-redux';
 import 'simplebar';
 import 'simplebar/dist/simplebar.min.css';
 
-import { history, store } from './modules/store';
-import Root from './routes/index';
-import './styles/global';
+import { history, store } from './v4/modules/store';
+import Root from './v4/routes/index';
+import './v4/styles/global';
 
-import { IS_DEVELOPMENT } from './constants/environment';
 import { UnityUtil } from './globals/unity-util';
-import { clientConfigService } from './services/clientConfig';
-import './services/fontAwesome';
+import { IS_DEVELOPMENT } from './v4/constants/environment';
+import { clientConfigService } from './v4/services/clientConfig';
+import './v4/services/fontAwesome';
 
 window.UnityUtil = UnityUtil;
 

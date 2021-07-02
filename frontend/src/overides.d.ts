@@ -1,7 +1,7 @@
 declare global {
-	const angular: ng.IAngularStatic;
 	const ClientConfig: any;
 
+	// tslint:disable-next-line:interface-name
 	interface Window {
 		Module: any;
 		zxcvbn: any;
@@ -16,17 +16,22 @@ declare global {
 		__RESELECT_TOOLS__: any;
 	}
 
+	// tslint:disable-next-line:interface-name
 	interface Document {
 		webkitCancelFullScreen: () => void;
 	}
 
+	// tslint:disable-next-line:interface-name
 	interface Document {
 		webkitCancelFullScreen: () => void;
 	}
 
+	// tslint:disable-next-line:interface-name
 	interface HTMLElement {
 		webkitRequestFullscreen: () => void;
 	}
 }
+
+declare module '*.png';
 
 export {};

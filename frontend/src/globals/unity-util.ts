@@ -17,7 +17,7 @@
 declare var SendMessage;
 declare var createUnityInstance;
 
-import { IS_FIREFOX } from '../helpers/browser';
+import { IS_FIREFOX } from '../v4/helpers/browser';
 
 export class UnityUtil {
 	/** @hidden */

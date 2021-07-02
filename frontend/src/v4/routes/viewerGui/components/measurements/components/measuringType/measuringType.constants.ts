@@ -16,18 +16,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import CSAMIcon from '../../../../../../icons/measure/custom_surface_area_measurement.svg';
-import CSAMActiveIcon from '../../../../../../icons/measure/custom_surface_area_measurement_selected.svg';
-import MinimumDistanceIcon from '../../../../../../icons/measure/minimum_distance.svg';
-import MinimumDistanceActiveIcon from '../../../../../../icons/measure/minimum_distance_selected.svg';
-import PointIcon from '../../../../../../icons/measure/point.svg';
-import PointActiveIcon from '../../../../../../icons/measure/point_selected.svg';
-import Point2PointIcon from '../../../../../../icons/measure/point_to_point.svg';
-import Point2PointActiveIcon from '../../../../../../icons/measure/point_to_point_selected.svg';
-import RayCastIcon from '../../../../../../icons/measure/ray_cast.svg';
-import RayCastActiveIcon from '../../../../../../icons/measure/ray_cast_selected.svg';
-import SAMIcon from '../../../../../../icons/measure/surface_area_measurement.svg';
-import SAMActiveIcon from '../../../../../../icons/measure/surface_area_measurement_selected.svg';
+import CSAMIcon from '@assets/icons/measure/custom_surface_area_measurement.svg';
+import CSAMActiveIcon from '@assets/icons/measure/custom_surface_area_measurement_selected.svg';
+import MinimumDistanceIcon from '@assets/icons/measure/minimum_distance.svg';
+import MinimumDistanceActiveIcon from '@assets/icons/measure/minimum_distance_selected.svg';
+import PointIcon from '@assets/icons/measure/point.svg';
+import PointActiveIcon from '@assets/icons/measure/point_selected.svg';
+import Point2PointIcon from '@assets/icons/measure/point_to_point.svg';
+import Point2PointActiveIcon from '@assets/icons/measure/point_to_point_selected.svg';
+import RayCastIcon from '@assets/icons/measure/ray_cast.svg';
+import RayCastActiveIcon from '@assets/icons/measure/ray_cast_selected.svg';
+import SAMIcon from '@assets/icons/measure/surface_area_measurement.svg';
+import SAMActiveIcon from '@assets/icons/measure/surface_area_measurement_selected.svg';
 
 import {
 	ACTIVE, DEFAULT, MEASURING_MODE, MEASURING_TYPE

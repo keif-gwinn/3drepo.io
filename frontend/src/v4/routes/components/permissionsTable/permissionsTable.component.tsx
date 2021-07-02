@@ -21,7 +21,7 @@ import { isEmpty, isEqual, memoize, pick } from 'lodash';
 import React from 'react';
 
 // @ts-ignore
-import AdminIconSrc from '../../../icons/how_to_reg.svg';
+import AdminIconSrc from '@assets/icons/how_to_reg.svg';
 
 import { MODEL_ROLES_TYPES } from '../../../constants/model-permissions';
 import { CellUserSearch } from '../customTable/components/cellUserSearch/cellUserSearch.component';

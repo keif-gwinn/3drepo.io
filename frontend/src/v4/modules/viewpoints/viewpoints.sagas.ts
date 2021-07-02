@@ -22,7 +22,7 @@ import { all, put, select, take, takeEvery, takeLatest } from 'redux-saga/effect
 import { selectSelectedViewpoint, selectViewpointsGroups, selectViewpointsGroupsBeingLoaded } from '.';
 import { CHAT_CHANNELS } from '../../constants/chat';
 import { ROUTES } from '../../constants/routes';
-import { UnityUtil } from '../../globals/unity-util';
+import { UnityUtil } from '../../../globals/unity-util';
 import { delay } from '../../helpers/aync';
 import { createGroupsByColor, createGroupsByTransformations, prepareGroup } from '../../helpers/groups';
 import { createGroupsFromViewpoint, groupsOfViewpoint,
