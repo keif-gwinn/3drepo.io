@@ -1,8 +1,6 @@
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HTMLWebpackPlugin = require('html-webpack-plugin');
 const OfflinePlugin = require('offline-plugin');
-const pickBy = require('lodash/pickBy');
-const identity = require('lodash/identity');
 
 const PATHS = require('./tools/paths');
 const MODES = require('./tools/modes');
@@ -14,16 +12,16 @@ module.exports = (options) => {
 	const config = {
 		mode: options.mode || MODES.DEVELOPMENT,
 		context: PATHS.APP_DIR,
-		entry: pickBy({
+		entry: {
 			maintenance: './maintenance.ts',
 			support: './support.ts',
 			main: './main.tsx',
 			...options.entry
-		}, identity),
-		output: Object.assign({
+		},
+		output: {
 			path: PATHS.DIST_DIR,
 			filename: '[name].[chunkhash].js'
-		}, options.output),
+		, ...options.output },
 		module: {
 			rules: [
 				loaders.TSLoader({transpileOnly}),
