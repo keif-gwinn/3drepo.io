@@ -15,6 +15,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { MainLayout } from '@/v5/components/shared/mainLayout';
+import { Router } from '@material-ui/icons';
 import { memoize } from 'lodash';
 import React from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
@@ -136,6 +138,7 @@ export class App extends React.PureComponent<IProps, IState> {
 				{this.renderHeader(!isStaticRoute(location.pathname))}
 				<Switch>
 					{this.renderLoginRoute()}
+					<Route exact path="/v5" component={MainLayout} />
 					<Route exact path={ROUTES.SIGN_UP} component={SignUp} />
 					<Route exact path={ROUTES.PASSWORD_FORGOT} component={PasswordForgot} />
 					<Route exact path={ROUTES.PASSWORD_CHANGE} component={PasswordChange} />
