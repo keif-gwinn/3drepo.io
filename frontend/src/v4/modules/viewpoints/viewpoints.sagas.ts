@@ -20,9 +20,9 @@ import { get } from 'lodash';
 import { all, put, select, take, takeEvery, takeLatest } from 'redux-saga/effects';
 
 import { selectSelectedViewpoint, selectViewpointsGroups, selectViewpointsGroupsBeingLoaded } from '.';
+import { UnityUtil } from '../../../globals/unity-util';
 import { CHAT_CHANNELS } from '../../constants/chat';
 import { ROUTES } from '../../constants/routes';
-import { UnityUtil } from '../../../globals/unity-util';
 import { delay } from '../../helpers/aync';
 import { createGroupsByColor, createGroupsByTransformations, prepareGroup } from '../../helpers/groups';
 import { createGroupsFromViewpoint, groupsOfViewpoint,

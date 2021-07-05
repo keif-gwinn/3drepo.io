@@ -18,13 +18,13 @@
 import EventEmitter from 'eventemitter3';
 import React from 'react';
 
+import { UnityUtil } from '../../../globals/unity-util';
 import { IS_DEVELOPMENT } from '../../constants/environment';
 import {
 	VIEWER_EVENTS,
 	VIEWER_NAV_MODES,
 	VIEWER_PROJECTION_MODES
 } from '../../constants/viewer';
-import { UnityUtil } from '../../../globals/unity-util';
 import { asyncTimeout } from '../../helpers/aync';
 import { DialogActions } from '../../modules/dialog';
 import { dispatch, getState } from '../../modules/store';
@@ -162,7 +162,7 @@ export class ViewerService {
 	}
 
 	public initUnity(options) {
-		return new Promise((resolve, reject) => {
+		return new Promise<void>((resolve, reject) => {
 			if (this.isInitialised) {
 				resolve();
 			}
@@ -205,7 +205,7 @@ export class ViewerService {
 			return Promise.resolve();
 		}
 
-		return new Promise((resolve, reject) => {
+		return new Promise<void>((resolve, reject) => {
 			this.unityLoaderScript.addEventListener ('load', () => {
 				(async () => {
 					console.debug('Loaded unity.loader.js succesfully');
