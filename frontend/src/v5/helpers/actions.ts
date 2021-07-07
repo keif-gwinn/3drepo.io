@@ -14,14 +14,3 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-import { CurrentUserSelectors } from '@/v5/helpers/selectors';
-const { selectUsername, selectAvatar } = CurrentUserSelectors;
-
-import React from 'react';
-
-export const MainLayout = () => {
-	const username = selectUsername();
-	const avatar = selectAvatar();
-	return (<div>This is the main layout for user {username} | <img src={avatar} /> | </div>);
-};
