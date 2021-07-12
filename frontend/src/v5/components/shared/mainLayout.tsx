@@ -15,13 +15,17 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { CurrentUserSelectors } from '@/v5/helpers/selectors';
-const { selectUsername, selectAvatar } = CurrentUserSelectors;
-
+import { AuthSelectors } from '@/v5/helpers/selectors';
+import { AuthActions } from '@/v5/store/auth/auth.redux';
 import React from 'react';
+import { useDispatch } from 'react-redux';
+const { selectIsAuthenticated } = AuthSelectors;
 
 export const MainLayout = () => {
-	const username = selectUsername();
-	const avatar = selectAvatar();
-	return (<div>This is the main layout for user {username} | <img src={avatar} /> | </div>);
+	const isAuthenticated = selectIsAuthenticated();
+	const dispatch = useDispatch();
+
+	const login = () => dispatch(AuthActions.login('tim', '12345'));
+
+	return (<div>The user isAuthenticated {isAuthenticated.toString()}  <button onClick={login} > login</button></div>);
 };

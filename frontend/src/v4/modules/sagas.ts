@@ -1,3 +1,4 @@
+import auth2Saga from '@/v5/store/auth/auth.sagas';
 import { all, fork } from 'redux-saga/effects';
 import activitiesSaga from './activities/activities.sagas';
 import authSaga from './auth/auth.sagas';
@@ -28,7 +29,6 @@ import userManagementSaga from './userManagement/userManagement.sagas';
 import viewerSaga from './viewer/viewer.sagas';
 import viewerGuiSaga from './viewerGui/viewerGui.sagas';
 import viewpointsSaga from './viewpoints/viewpoints.sagas';
-
 // <-- IMPORT MODULE SAGA -->
 
 export default function* rootSaga() {
@@ -62,6 +62,7 @@ export default function* rootSaga() {
 		fork(activitiesSaga),
 		fork(presentationSaga),
 		fork(legendSaga),
+		fork(auth2Saga)
 		// <-- INJECT MODULE SAGA -->
 	]);
 }

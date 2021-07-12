@@ -1,18 +1,22 @@
-// tslint:disable:no-string-literal
-const noop = () => ({});
-
-global['window'] = {};
-const navigator = { platform: 'node', userAgent: '' };
-global['navigator'] = navigator;
-global['document'] = { createElement: noop};
-
-import * as AuthSaga from '@/v4/modules/auth/auth.sagas';
+import { AuthActions, AuthTypes } from '@/v5/store/auth/auth.redux';
+import * as AuthSaga from '@/v5/store/auth/auth.sagas';
 import assert from 'assert';
+import { expectSaga } from 'redux-saga-test-plan';
 
-describe('Auth sagas', () => {
-	describe('login stuff', () => {
-		it('should return -1 when the value is not present', () => {
-			assert(AuthSaga);
-		});
-	});
+// describe('Auth sagas', () => {
+// 	describe('login stuff', () => {
+// 		it('should return -1 when the value is not present', () => {
+// 			assert(AuthSaga);
+// 		});
+// 	});
+// });
+
+it('Auth sagas', () => {
+	return expectSaga(AuthSaga.default)
+		// Assert that the `put` will eventually happen.
+		.dispatch(AuthActions.login('stuff', 'pass'))
+		// Dispatch any actions that the saga will `take`.
+		.put(AuthActions.loginSuccess())
+		// Start the test. Returns a Promise.
+		.run();
 });

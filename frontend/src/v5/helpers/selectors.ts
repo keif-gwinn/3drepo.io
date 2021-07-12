@@ -15,6 +15,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 import * as CurrentUserSelectors_ from '@/v4/modules/currentUser/currentUser.selectors';
+import * as AuthSelectors_ from '@/v5/store/auth/auth.selectors';
+
 import { useSelector } from 'react-redux';
 
 type NameMap<Type> = {
@@ -31,3 +33,4 @@ const wrapSelectors = <T>(moduleSelectors: T) => {
 };
 
 export const CurrentUserSelectors = wrapSelectors(CurrentUserSelectors_);
+export const AuthSelectors = wrapSelectors(AuthSelectors_);

@@ -30,16 +30,14 @@ interface IAuthTypes {
 export const { Types: AuthTypes, Creators: AuthActions }: {Types: IAuthTypes,  Creators: IAuthActions} = createActions({
 	login: ['username', 'password'],
 	loginSuccess: []
-}, { prefix: 'AUTH/' });
+}, { prefix: 'AUTH2/' });
 
 export const INITIAL_STATE = {
-	isAuthenticated: null,
-	isPending: false,
-	message: ''
+	isAuthenticated: false,
 };
 
 export const loginSuccess = (state = INITIAL_STATE) => {
-	return { ...state, isAuthenticated: true, isPending: false };
+	return { ...state, isAuthenticated: true };
 };
 
 export const reducer = createReducer(INITIAL_STATE, {

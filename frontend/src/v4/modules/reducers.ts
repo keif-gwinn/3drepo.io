@@ -5,6 +5,7 @@ import undoable from 'redux-undo';
 import { CanvasHistoryTypes } from './canvasHistory';
 import { batchGroupBy } from './canvasHistory/canvasHistory.helpers';
 
+import { reducer as auth2Reducer } from '@/v5/store/auth/auth.redux';
 import { reducer as activitiesReducer } from './activities/activities.redux';
 import { reducer as authReducer } from './auth/auth.redux';
 import { reducer as billingReducer } from './billing/billing.redux';
@@ -36,6 +37,7 @@ import { reducer as userManagementReducer } from './userManagement/userManagemen
 import { reducer as viewerReducer } from './viewer/viewer.redux';
 import { reducer as viewerGuiReducer } from './viewerGui/viewerGui.redux';
 import { reducer as viewpointsReducer } from './viewpoints/viewpoints.redux';
+
 // <-- IMPORT MODULE REDUCER -->
 
 export default function createReducer(history) {
@@ -77,6 +79,7 @@ export default function createReducer(history) {
 		presentation: presentationReducer,
 		activities: activitiesReducer,
 		legend: legendReducer,
+		auth2: auth2Reducer,
 		board: boardReducer // <-- INJECT MODULE REDUCER -->
 	});
 }
