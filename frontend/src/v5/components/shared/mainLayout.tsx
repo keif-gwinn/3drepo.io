@@ -15,17 +15,19 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { AuthSelectors } from '@/v5/helpers/selectors';
-import { AuthActions } from '@/v5/store/auth/auth.redux';
+import { AuthActions } from '@/v5/helpers/actions';
+import * as selectors from '@/v5/helpers/selectors';
 import React from 'react';
-import { useDispatch } from 'react-redux';
-const { selectIsAuthenticated } = AuthSelectors;
+const { selectIsAuthenticated } = selectors.AuthSelectors;
+
+// const generate
 
 export const MainLayout = () => {
 	const isAuthenticated = selectIsAuthenticated();
-	const dispatch = useDispatch();
 
-	const login = () => dispatch(AuthActions.login('tim', '12345'));
+	const login = () => {
+		AuthActions.login('tim', '12345');
+	};
 
 	return (<div>The user isAuthenticated {isAuthenticated.toString()}  <button onClick={login} > login</button></div>);
 };

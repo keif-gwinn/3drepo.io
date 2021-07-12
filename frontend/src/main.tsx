@@ -7,7 +7,9 @@ import { Provider } from 'react-redux';
 import 'simplebar';
 import 'simplebar/dist/simplebar.min.css';
 
-import { history, store } from './v4/modules/store';
+import { initialize as initializeActions } from '@/v5/helpers/actions';
+import { dispatch, history, store } from './v4/modules/store';
+
 import Root from './v4/routes/index';
 import './v4/styles/global';
 
@@ -17,6 +19,8 @@ import { clientConfigService } from './v4/services/clientConfig';
 import './v4/services/fontAwesome';
 
 window.UnityUtil = UnityUtil;
+
+initializeActions(dispatch);
 
 const render = () => {
 	ReactDOM.render(

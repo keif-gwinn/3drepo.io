@@ -14,3 +14,19 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+import { AuthActions as AuthActions_ } from '@/v5/store/auth/auth.redux';
+import { useDispatch } from 'react-redux';
+
+let dispatch: any = null;
+
+export const wrapActions = <T>(ActionsCreators: T) => {
+	const exportObject = {};
+	Object.keys(ActionsCreators).forEach((key) => {
+		exportObject[key] = (...args) => dispatch(ActionsCreators[key].apply(null, args) );
+	});
+
+	return exportObject as T;
+};
+
+export const initialize = (dispatchFunc) => dispatch = dispatchFunc;
+export const AuthActions = wrapActions(AuthActions_);
