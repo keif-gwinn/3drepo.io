@@ -8,7 +8,8 @@
       "react",
       "react-dom",
       "lodash",
-      "node"
+      "node",
+      "mocha"
     ],
     "lib": [
       "es2015",

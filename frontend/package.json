@@ -9,6 +9,7 @@
   "scripts": {
     "build:base:development": "webpack --watch --progress --config ./internals/webpack/webpack.dev.config.js",
     "build:base:production": "webpack --progress --config ./internals/webpack/webpack.prod.config.js",
+    "build:t": "webpack --progress --config ./internals/webpack/webpack.test.config.js",
     "watch": "yarn build:base:development --no-type-checking",
     "build": "yarn build:base:production --no-type-checking",
     "build:test": "cross-env NODE_OPTIONS='--max-old-space-size=4096' yarn build:base:production",
@@ -108,6 +109,7 @@
   },
   "devDependencies": {
     "@types/lodash": "4.14.137",
+    "@types/mocha": "8.2.3",
     "@types/node": "8.5.2",
     "@types/protractor": "4.0.0",
     "@types/react": "16.8.6",
