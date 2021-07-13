@@ -15,7 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { MainLayout } from '@/v5/components/shared/mainLayout';
+import { MainLayout } from '@components/shared/mainLayout';
 import { Router } from '@material-ui/icons';
 import { memoize } from 'lodash';
 import React from 'react';

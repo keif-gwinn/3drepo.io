@@ -23,7 +23,8 @@
     "baseUrl": "./",
     "paths": {
       "@assets/*": ["./assets/*"],
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@components/*": ["./src/v5/ui/components/*"]
     }
   },
   "exclude": [

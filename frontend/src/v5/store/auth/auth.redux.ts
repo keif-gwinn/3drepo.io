@@ -22,15 +22,10 @@ interface IAuthActions {
 	loginSuccess: () => any;
 }
 
-interface IAuthTypes {
-	LOGIN_SUCCESS: string;
-	LOGIN: string;
-}
-
-export const { Types: AuthTypes, Creators: AuthActions }: {Types: IAuthTypes,  Creators: IAuthActions} = createActions({
+export const { Types: AuthTypes, Creators: AuthActions } = createActions({
 	login: ['username', 'password'],
 	loginSuccess: []
-}, { prefix: 'AUTH2/' });
+}, { prefix: 'AUTH2/' }) as {Types: Constants<IAuthActions>,  Creators: IAuthActions};
 
 export const INITIAL_STATE = {
 	isAuthenticated: false,
