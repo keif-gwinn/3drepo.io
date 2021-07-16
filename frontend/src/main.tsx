@@ -8,15 +8,15 @@ import 'simplebar';
 import 'simplebar/dist/simplebar.min.css';
 
 import { initialize as initializeActions } from '@/v5/helpers/actions';
-import { dispatch, history, store } from './v4/modules/store';
+import { dispatch, history, store } from '@/v4/modules/store';
 
-import Root from './v4/routes/index';
-import './v4/styles/global';
+import Root from '@/v4/routes/index';
+import '@/v4/styles/global';
 
-import { UnityUtil } from './globals/unity-util';
-import { IS_DEVELOPMENT } from './v4/constants/environment';
-import { clientConfigService } from './v4/services/clientConfig';
-import './v4/services/fontAwesome';
+import { UnityUtil } from '@/globals/unity-util';
+import { IS_DEVELOPMENT } from '@/v4/constants/environment';
+import { clientConfigService } from '@/v4/services/clientConfig';
+import '@/v4/services/fontAwesome';
 
 window.UnityUtil = UnityUtil;
 
@@ -24,8 +24,7 @@ initializeActions(dispatch);
 
 const render = () => {
 	ReactDOM.render(
-		// tslint:disable-next-line: jsx-wrap-multiline
-		<Provider store={store} >
+		<Provider store={store as any} >
 			<ConnectedRouter history={history}>
 				<Root />
 			</ConnectedRouter>
