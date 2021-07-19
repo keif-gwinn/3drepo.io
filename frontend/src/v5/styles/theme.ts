@@ -1,5 +1,8 @@
 import { createMuiTheme } from '@material-ui/core/styles';
 
+// color: '#237667'
+
+
 
 export const theme = createMuiTheme({
 	palette: {
@@ -12,8 +15,14 @@ export const theme = createMuiTheme({
 	},
 	overrides: {
 		MuiButton: {
-			root: {
-				boxShadow: "1px 3px 1px #9E9E9E"
+			contained: {
+				boxShadow: "0px 0px 0px #9E9E9E",
+				'&:hover': {
+					boxShadow: "0px 0px 10px #9Eff9E",
+				}
+			},
+			containedPrimary: {
+				color: 'white'
 			}
 		}
 	}
