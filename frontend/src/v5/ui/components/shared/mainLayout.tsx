@@ -17,10 +17,11 @@
 
 import { AuthActions } from '@/v5/helpers/actions';
 import * as selectors from '@/v5/helpers/selectors';
+import { theme } from '@/v5/styles/theme';
+import Button from '@material-ui/core/Button';
+import { MuiThemeProvider } from '@material-ui/core';
 import React from 'react';
 const { selectIsAuthenticated } = selectors.AuthSelectors;
-
-// const generate
 
 export const MainLayout = () => {
 	const isAuthenticated = selectIsAuthenticated();
@@ -29,5 +30,10 @@ export const MainLayout = () => {
 		AuthActions.login('tim', '12345');
 	};
 
-	return (<div>The user isAuthenticated {isAuthenticated.toString()}  <button onClick={login} > login</button></div>);
+	return (
+		<MuiThemeProvider theme={theme}>
+	 		<div>The user isAuthenticated {isAuthenticated.toString()}
+			 <Button onClick={login} color="primary" variant="contained"> login</Button></div>
+		</MuiThemeProvider>
+	);
 };
