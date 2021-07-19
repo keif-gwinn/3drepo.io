@@ -19,7 +19,10 @@ export const theme = createMuiTheme({
 				boxShadow: "0px 0px 0px #9E9E9E",
 				'&:hover': {
 					boxShadow: "0px 0px 10px #9Eff9E",
-				}
+				},
+				'&:active': {
+					boxShadow: "0px 0px 3px #9E0f9E",
+				},
 			},
 			containedPrimary: {
 				color: 'white'
