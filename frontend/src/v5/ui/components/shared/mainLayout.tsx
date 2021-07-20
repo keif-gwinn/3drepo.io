@@ -32,8 +32,11 @@ export const MainLayout = () => {
 
 	return (
 		<MuiThemeProvider theme={theme}>
-	 		<div>The user isAuthenticated {isAuthenticated.toString()}
-			 <Button onClick={login} color="primary" variant="contained"> login</Button></div>
+	 		<div style={{backgroundColor:'#ffffff'}}>
+				The user isAuthenticated {isAuthenticated.toString()}
+				<Button onClick={login} color="primary" variant="contained"> login</Button> <br />
+				<Button color="primary" variant="outlined">Test</Button>
+			</div>
 		</MuiThemeProvider>
 	);
 };
