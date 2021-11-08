@@ -89,14 +89,23 @@ def printMeshCount(connString, database, modelId, debug):
         if debug:
             print("--database: " + database)
 
+    ## Get Coord Offset
+
+
     ##### Check model ID and sum face count #####
         if 0 < len(list(db.settings.find({"_id":modelId}))):
             if debug:
                 print("\t--model: " +  modelId)
+
+            for entry in db[modelId + ".history"].find():
+                coord = entry.get("coordOffset")
+                break ## What happens here with revisions?
+
             for entry in db[modelId + ".scene"].find({"type":"mesh"}):
                 sharedId = entry.get("shared_id")
                 facesCount = entry.get("faces_count")
-                print(modelId + ", " + str(sharedId) + ", " + str(facesCount))
+                boundingBox = entry.get("bounding_box")
+                print(database + ", " + modelId + ", " + str(sharedId) + ", " +str(coord[0]) + ", " + str(coord[1]) + ", " + str(coord[2]) + ", " + str(boundingBox[0][0]) + ", " + str(boundingBox[0][1]) + ", " + str(boundingBox[0][2]) + ", " + str(boundingBox[1][0]) + ", " + str(boundingBox[1][1]) + ", " + str(boundingBox[1][2]) + ", " + str(facesCount))
         else:
             if debug:
                 print("\t-model not found: " + modelId)

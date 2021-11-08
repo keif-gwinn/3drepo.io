@@ -19,7 +19,7 @@ fedId = sys.argv[6]
 connString = "mongodb://"+ userName + ":" + password +"@"+mongoURL + ":" + mongoPort + "/"
 
 debug = False
-showSum = True
+showSum = False
 
 ##### Connect to the Database #####
 db = MongoClient(connString)
