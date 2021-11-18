@@ -39,6 +39,7 @@ export const TopNavigation = (): JSX.Element => {
 				<>
 					<Link to={`${url}/t/federations`}><FormattedMessage id="Federations" defaultMessage="Federations" /></Link>
 					<Link to={`${url}/t/containers`}><FormattedMessage id="Containers" defaultMessage="Containers" /></Link>
+					<Link to={`${url}/t/tasks`}><FormattedMessage id="Tasks" defaultMessage="Tasks" /></Link>
 					<Link to={`${discardUrlComponent(url, 'settings')}/t/settings`}><FormattedMessage id="Settings" defaultMessage="Settings" /></Link>
 				</>
 			)}

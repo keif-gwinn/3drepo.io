@@ -26,6 +26,7 @@ import { ITeamspace } from '@/v5/store/teamspaces/teamspaces.redux';
 import { NOT_FOUND_ROUTE_PATH } from '@/v5/ui/routes/routes.constants';
 import { Federations } from './federations';
 import { Containers } from './containers';
+import { Tasks } from './tasks/tasks';
 
 export const ProjectContent = () => {
 	const teamspaces: ITeamspace[] = TeamspacesHooksSelectors.selectTeamspaces();
@@ -49,6 +50,9 @@ export const ProjectContent = () => {
 			</Route>
 			<Route exact path={`${path}/t/containers`}>
 				<Containers />
+			</Route>
+			<Route exact path={`${path}/t/tasks`}>
+				<Tasks />
 			</Route>
 			<Route exact path={`${path}/t/settings`}>
 				Project settings

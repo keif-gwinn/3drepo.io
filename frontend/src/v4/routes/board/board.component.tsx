@@ -528,7 +528,7 @@ export function Board(props: IProps) {
 
 	return (
 		<Panel {...PANEL_PROPS} title={BoardTitle}>
-			<Container>
+			<Container name="pepito">
 				{renderSearchPanel(props.searchEnabled)}
 				<Config>
 					<DataConfig>

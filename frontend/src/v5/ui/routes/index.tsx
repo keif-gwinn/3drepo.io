@@ -30,6 +30,7 @@ import { TeamspacesActionsDispatchers } from '@/v5/services/actionsDispatchers/t
 import { getIntlProviderProps } from '@/v5/services/intl';
 import { IntlProvider } from 'react-intl';
 import { Dashboard } from './dashboard';
+import { V4OverridesContainer } from './v4overrides.styles';
 
 export const Root = () => {
 	const history = useHistory();
@@ -59,7 +60,9 @@ export const Root = () => {
 			<MuiThemeProvider theme={theme}>
 				<StylesProvider injectFirst>
 					<IntlProvider {...getIntlProviderProps()}>
-						<Dashboard />
+						<V4OverridesContainer>
+							<Dashboard />
+						</V4OverridesContainer>
 					</IntlProvider>
 				</StylesProvider>
 			</MuiThemeProvider>

@@ -37,7 +37,7 @@ dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isBetween);
 
-export const selectBoardDomain = (state) => state.board;
+export const selectBoardDomain = (state) => state.board || {};
 
 export const selectIsPending = createSelector(
 	selectBoardDomain, (state) => state.isPending
@@ -95,7 +95,7 @@ const selectIssues = createSelector(
 	selectBoardDomain,  selectShowClosedIssues, selectAllFilteredIssuesGetter,
 	({ filterProp }, showClosedIssues, selectAllFilteredIssuessGetter) => {
 		const forceShowHidden = filterProp === ISSUE_FILTER_PROPS.status.value || showClosedIssues;
-		return  selectAllFilteredIssuessGetter(forceShowHidden);
+		return  selectAllFilteredIssuessGetter(forceShowHidden) || [];
 	}
 );
 
@@ -103,7 +103,7 @@ const selectRisks = createSelector(
 	selectBoardDomain, selectAllFilteredRisksGetter,
 	({ filterProp }, risksGetter) => {
 		const forceShowHidden = filterProp === RISK_FILTER_PROPS.mitigation_status.value;
-		return risksGetter(forceShowHidden);
+		return risksGetter(forceShowHidden) || [];
 	}
 );
 
@@ -112,8 +112,8 @@ const selectRawCardData = createSelector(
 	selectRisks,
 	(issues, risks ) => {
 		return {
-			[BOARD_TYPES.ISSUES]: issues,
-			[BOARD_TYPES.RISKS]: risks
+			[BOARD_TYPES.ISSUES]: issues || [],
+			[BOARD_TYPES.RISKS]: risks || []
 		};
 });
 
@@ -124,6 +124,8 @@ export const selectLanes = createSelector(
 	selectJobsValues,
 	selectRiskCategories,
 	({ filterProp, boardType }, rawCardData, topicTypes, jobsValues, riskCategories) => {
+		boardType = boardType || 'issues';
+
 		const isIssueBoardType = boardType === 'issues';
 
 		const FILTER_PROPS = isIssueBoardType ? ISSUE_FILTER_PROPS : RISK_FILTER_PROPS;
