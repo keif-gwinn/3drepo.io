@@ -156,13 +156,12 @@ const IssueBoardCard = ({ metadata, onClick }: any) => (
 
 export function Board(props: IProps) {
 	const boardRef = useRef(null);
-	const { type, teamspace, project, modelId: modelFromParam } = useParams();
+	const { type: typeParam, teamspace, project, modelId: modelParam } = useParams();
 
-	const [modelId, setModelId] = useState(modelFromParam);
+	const [modelId, setModelId] = useState(modelParam);
 
+	const type:string = typeParam || props.boardType;
 
-	const projectParam = `${project ? `/${project}` : ''}`;
-	const modelParam = `${modelId ? `/${modelId}` : ''}`;
 	const isIssuesBoard = type === 'issues';
 	const boardData = { lanes: props.lanes };
 	const selectedFilters = isIssuesBoard ? props.selectedIssueFilters : props.selectedRiskFilters;
@@ -174,8 +173,8 @@ export function Board(props: IProps) {
 	} = props;
 
 	useEffect(() => {
-		if (type !== props.boardType) {
-			props.setBoardType(type);
+		if (typeParam !== props.boardType && typeParam) {
+			props.setBoardType(typeParam);
 		}
 
 		if (!isIssuesBoard) {
@@ -230,7 +229,10 @@ export function Board(props: IProps) {
 	const teamspacesItems = useMemo(() => props.teamspaces.map(({ account }) => ({ value: account })), [props.teamspaces]);
 
 	const handleTypeChange = (e) => {
-		const url = `${ROUTES.BOARD_MAIN}/${e.target.value}/${teamspace}${projectParam}${modelParam}`;
+		const projectUrlComponent = `${project ? `/${project}` : ''}`;
+		const modelUrlComponent = `${modelId ? `/${modelId}` : ''}`;
+
+		const url = `${ROUTES.BOARD_MAIN}/${e.target.value}/${teamspace}${projectUrlComponent}${modelUrlComponent}`;
 		props.history.push(url);
 		props.setBoardType(e.target.value);
 	};
