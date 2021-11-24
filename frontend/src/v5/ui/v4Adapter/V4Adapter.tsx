@@ -15,22 +15,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import Board from '@/v4/routes/board/board.container';
+import { DialogContainer } from '@/v4/routes/components/dialogContainer';
+import { SnackbarContainer } from '@/v4/routes/components/snackbarContainer';
+import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 import React from 'react';
-import { useParams } from 'react-router';
+import DayJsUtils from '@date-io/dayjs';
+import { V4OverridesContainer } from './v4overrides.styles';
 
-export const Tasks = () => {
-	const { teamspace } = useParams();
+export const V4Adapter = ({ children }) => (
+	<V4OverridesContainer>
+		<MuiPickersUtilsProvider utils={DayJsUtils}>
 
-	const history = { push: () => {} };
-
-	return (
-		<Board
-			match={undefined}
-			currentTeamspace={teamspace}
-			history={history}
-			location={undefined}
-			selectedRiskFilters={undefined}
-		/>
-	);
-};
+			{children}
+			<DialogContainer />
+			<SnackbarContainer />
+		</MuiPickersUtilsProvider>
+	</V4OverridesContainer>
+);

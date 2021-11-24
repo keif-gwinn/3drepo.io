@@ -48,7 +48,7 @@ export const getProjectModels = (teamspaces = [], projectsMap, modelsMap, curren
 	const selectedTeamspace = teamspaces.find((ts) => ts.account === currentTeamspace);
 
 	if (selectedTeamspace) {
-		const selectedProject = selectedTeamspace.projects
+		const selectedProject = projectsMap[projectName] || selectedTeamspace.projects
 			.map((project) => projectsMap[project])
 			.find((p) => p.name === projectName);
 

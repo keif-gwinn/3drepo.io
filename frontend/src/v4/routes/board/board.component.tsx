@@ -15,7 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import React, { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import IconButton from '@material-ui/core/IconButton';
 import InputLabel from '@material-ui/core/InputLabel';
@@ -125,7 +125,7 @@ interface IProps {
 	resetModel: () => void;
 	resetIssues: () => void;
 	resetRisks: () => void;
-	openCardDialog: (cardId: string, onChange: (index: number) => void) => void;
+	openCardDialog: (teamspace: string, modelId: string, cardId: string, onChange: (index: number) => void) => void;
 	setSortBy: (field) => void;
 	criteria: any;
 }
@@ -156,7 +156,11 @@ const IssueBoardCard = ({ metadata, onClick }: any) => (
 
 export function Board(props: IProps) {
 	const boardRef = useRef(null);
-	const { type, teamspace, project, modelId } = useParams();
+	const { type, teamspace, project, modelId: modelFromParam } = useParams();
+
+	const [modelId, setModelId] = useState(modelFromParam);
+
+
 	const projectParam = `${project ? `/${project}` : ''}`;
 	const modelParam = `${modelId ? `/${modelId}` : ''}`;
 	const isIssuesBoard = type === 'issues';
@@ -254,6 +258,8 @@ export function Board(props: IProps) {
 		}
 
 		props.history.push(url);
+
+		setModelId(newModelId);
 	};
 
 	const handleFilterClick = ({target: {value}}) => {
@@ -269,7 +275,7 @@ export function Board(props: IProps) {
 	};
 
 	const handleOpenDialog = useCallback((cardId?) => {
-		props.openCardDialog(cardId, handleNavigationChange);
+		props.openCardDialog(teamspace, modelId, cardId, handleNavigationChange);
 	}, [teamspace, modelId, props.cards]);
 
 	const handleAddNewCard = () => {
@@ -528,7 +534,7 @@ export function Board(props: IProps) {
 
 	return (
 		<Panel {...PANEL_PROPS} title={BoardTitle}>
-			<Container name="pepito">
+			<Container>
 				{renderSearchPanel(props.searchEnabled)}
 				<Config>
 					<DataConfig>

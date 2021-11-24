@@ -22,7 +22,7 @@ export const { Types: BoardTypes, Creators: BoardActions } = createActions({
 	fetchData: ['boardType', 'teamspace', 'project', 'modelId'],
 	fetchCardData: ['boardType', 'teamspace', 'modelId', 'cardId'],
 	resetCardData: ['boardType'],
-	openCardDialog: ['cardId', 'onNavigationChange', 'disableReset'],
+	openCardDialog: ['teamspace', 'modelId', 'cardId', 'onNavigationChange', 'disableReset'],
 	setIsPending: ['isPending'],
 	setFilterProp: ['filterProp'],
 	setBoardType: ['boardType'],

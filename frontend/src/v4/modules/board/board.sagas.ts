@@ -98,8 +98,7 @@ function* fetchCardData({ teamspace, modelId, cardId }) {
 	}
 }
 
-function* openCardDialog({ cardId, onNavigationChange, disableReset }) {
-	const { teamspace, modelId } = yield select(selectUrlParams);
+function* openCardDialog({teamspace, modelId, cardId, onNavigationChange, disableReset }) {
 	const boardType = yield select(selectBoardType);
 
 	if (cardId) {
