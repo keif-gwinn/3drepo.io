@@ -16,24 +16,46 @@
  */
 
 const Crypto = require('crypto');
+const amqp = require('amqplib');
 
 const { src, srcV4 } = require('./path');
 
 const { createApp } = require(`${srcV4}/services/api`);
 const DbHandler = require(`${src}/handler/db`);
+const config = require(`${src}/utils/config`);
 const { createTeamSpaceRole } = require(`${srcV4}/models/role`);
 const { generateUUID, uuidToString, stringToUUID } = require(`${srcV4}/utils`);
 const { PROJECT_ADMIN, TEAMSPACE_ADMIN } = require(`${src}/utils/permissions/permissions.constants`);
 
 const db = {};
-const ServiceHelper = { db };
+const queue = {};
+const ServiceHelper = { db, queue };
+
+queue.purgeQueues = async () => {
+	try {
+		// eslint-disable-next-line
+		const { host, worker_queue, model_queue, callback_queue } = config.cn_queue;
+		const conn = await amqp.connect(host);
+		const channel = await conn.createChannel();
+
+		channel.on('error', () => {});
+
+		await Promise.all([
+			channel.purgeQueue(worker_queue),
+			channel.purgeQueue(model_queue),
+			channel.purgeQueue(callback_queue),
+		]);
+	} catch (err) {
+		// doesn't really matter if purge queue failed. it's just for clean up.
+	}
+};
 
 // userCredentials should be the same format as the return value of generateUserCredentials
 db.createUser = async (userCredentials, tsList = [], customData = {}) => {
-	const { user, password, apiKey } = userCredentials;
+	const { user, password, apiKey, basicData = {} } = userCredentials;
 	const roles = tsList.map((ts) => ({ db: ts, role: 'team_member' }));
 	const adminDB = await DbHandler.getAuthDB();
-	return adminDB.addUser(user, password, { customData: { ...customData, apiKey }, roles });
+	return adminDB.addUser(user, password, { customData: { ...basicData, ...customData, apiKey }, roles });
 };
 
 db.createTeamspaceRole = (ts) => createTeamSpaceRole(ts);
@@ -96,6 +118,8 @@ db.createGroups = (teamspace, modelId, groups = []) => {
 	return DbHandler.insertMany(teamspace, `${modelId}.groups`, toInsert);
 };
 
+db.createJobs = (teamspace, jobs) => DbHandler.insertMany(teamspace, 'jobs', jobs);
+
 db.createIssue = (teamspace, modelId, issue) => {
 	const formattedIssue = { ...issue, _id: stringToUUID(issue._id) };
 	return DbHandler.insertOne(teamspace, `${modelId}.issues`, formattedIssue);
@@ -106,16 +130,36 @@ db.createRisk = (teamspace, modelId, risk) => {
 	return DbHandler.insertOne(teamspace, `${modelId}.risks`, formattedRisk);
 };
 
+db.createViews = (teamspace, modelId, views) => {
+	const formattedViews = views.map((view) => ({ ...view, _id: stringToUUID(view._id) }));
+	return DbHandler.insertMany(teamspace, `${modelId}.views`, formattedViews);
+};
+
+db.createLegends = (teamspace, modelId, legends) => {
+	const formattedLegends = legends.map((legend) => ({ ...legend, _id: stringToUUID(legend._id) }));
+	return DbHandler.insertMany(teamspace, `${modelId}.sequences.legends`, formattedLegends);
+};
+
 ServiceHelper.generateUUIDString = () => uuidToString(generateUUID());
 ServiceHelper.generateUUID = () => generateUUID();
 ServiceHelper.generateRandomString = (length = 20) => Crypto.randomBytes(Math.ceil(length / 2.0)).toString('hex');
 ServiceHelper.generateRandomDate = (start = new Date(2018, 1, 1), end = new Date()) => new Date(start.getTime()
     + Math.random() * (end.getTime() - start.getTime()));
+ServiceHelper.generateRandomNumber = (min = -1000, max = 1000) => Math.random() * (max - min) + min;
 
 ServiceHelper.generateUserCredentials = () => ({
 	user: ServiceHelper.generateRandomString(),
 	password: ServiceHelper.generateRandomString(),
 	apiKey: ServiceHelper.generateRandomString(),
+	basicData: {
+		firstName: ServiceHelper.generateRandomString(),
+		lastName: ServiceHelper.generateRandomString(),
+		billing: {
+			billingInfo: {
+				company: ServiceHelper.generateRandomString(),
+			},
+		},
+	},
 });
 
 ServiceHelper.generateRevisionEntry = (isVoid = false) => ({
@@ -128,12 +172,28 @@ ServiceHelper.generateRevisionEntry = (isVoid = false) => ({
 
 ServiceHelper.generateRandomModelProperties = () => ({
 	properties: {
-		code: ServiceHelper.generateUUIDString(),
+		code: ServiceHelper.generateRandomString(),
 		unit: 'm',
 	},
-	type: ServiceHelper.generateUUIDString(),
-	timestamp: Date.now(),
+	desc: ServiceHelper.generateRandomString(),
+	type: ServiceHelper.generateRandomString(),
 	status: 'ok',
+	surveyPoints: [
+		{
+			position: [
+				ServiceHelper.generateRandomNumber(),
+				ServiceHelper.generateRandomNumber(),
+				ServiceHelper.generateRandomNumber(),
+			],
+			latLong: [
+				ServiceHelper.generateRandomNumber(),
+				ServiceHelper.generateRandomNumber(),
+			],
+		},
+	],
+	angleFromNorth: 123,
+	defaultView: ServiceHelper.generateUUIDString(),
+	defaultLegend: ServiceHelper.generateUUIDString(),
 });
 
 ServiceHelper.generateGroup = (account, model, isSmart = false, isIfcGuids = false, serialised = true) => {

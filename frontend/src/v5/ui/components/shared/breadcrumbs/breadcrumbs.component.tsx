@@ -16,15 +16,18 @@
  */
 
 import React from 'react';
-import { useParams, useRouteMatch } from 'react-router-dom';
-
+import { useParams, useRouteMatch, useHistory } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+
 import { uriCombine } from '@/v5/services/routing/routing';
 import { TeamspacesHooksSelectors } from '@/v5/services/selectorsHooks/teamspacesSelectors.hooks';
 import { ProjectsActionsDispatchers } from '@/v5/services/actionsDispatchers/projectsActions.dispatchers';
 import { ITeamspace } from '@/v5/store/teamspaces/teamspaces.redux';
 import { ProjectsHooksSelectors } from '@/v5/services/selectorsHooks/projectsSelectors.hooks';
 import { IProject } from '@/v5/store/projects/projects.redux';
+import { DialogsActions } from '@/v5/store/dialogs/dialogs.redux';
+import { formatMessage } from '@/v5/services/intl';
 import { Container, Breadcrumb, InteractiveBreadcrumb } from './breadcrumbs.styles';
 import { NavigationMenu } from '../navigatonMenu';
 
@@ -41,6 +44,8 @@ const projectList2LinkList = (projects: IProject[]) => (projects.length ? projec
 })) : []);
 
 export const Breadcrumbs = (): JSX.Element => {
+	const history = useHistory();
+	const dispatch = useDispatch();
 	const { teamspace } = useParams();
 	let { project } = useParams();
 
@@ -50,10 +55,23 @@ export const Breadcrumbs = (): JSX.Element => {
 	React.useEffect(() => {
 		if (project) {
 			ProjectsActionsDispatchers.fetch(teamspace);
+			ProjectsActionsDispatchers.setCurrentProject(project);
 		}
 	}, [project, teamspace]);
 
 	if (projects.length && !projects.find(({ _id }) => _id === project)) {
+		dispatch(DialogsActions.open('alert', {
+			onClickClose: () => history.push('/'),
+			currentActions: formatMessage({ id: 'breadCrumbs.projectFetchError.title', defaultMessage: 'trying to find project' }),
+			errorMessage: formatMessage({
+				id: 'breadCrumbs.projectFetchError.details',
+				defaultMessage: 'The project with id "{project}" was not found.' },
+			{
+				project,
+			}),
+			details: formatMessage({ id: 'breadCrumbs.projectFetchError.redirect', defaultMessage: 'You will be redirected to the main page of the dashboard.' }),
+		}));
+
 		project = null;
 	}
 
