@@ -1,4 +1,4 @@
-/**
+    /**
  *  Copyright (C) 2021 3D Repo Ltd
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,6 +16,15 @@
  */
 
 const permConst = {};
+
+permConst.SYSTEM_ADMIN = 'system_admin';
+permConst.SUPPORT_ADMIN = 'support_admin';
+permConst.LICENSE_ADMIN = 'license_admin';
+
+permConst.LICENSE_WRITE_ROLES  = [permConst.LICENSE_ADMIN];
+permConst.LICENSE_READ_ROLES  = [permConst.LICENSE_ADMIN, permConst.SUPPORT_ADMIN];
+permConst.SYSTEMROLES_WRITE_ROLES  = [permConst.SYSTEM_ADMIN];
+permConst.SYSTEMROLES_READ_ROLES  = [permConst.SYSTEM_ADMIN, permConst.SUPPORT_ADMIN];
 
 permConst.TEAMSPACE_ADMIN = 'teamspace_admin';
 permConst.PROJECT_ADMIN = 'admin_project';

@@ -16,6 +16,9 @@
  */
 
 const {
+	hasEditLicense, hasEditUserRoles, hasViewLicense, hasViewUserRoles,
+} = require('./components/system');
+const {
 	hasAdminAccessToContainer, hasAdminAccessToFederation, hasCommenterAccessToContainer,
 	hasCommenterAccessToFederation, hasReadAccessToContainer, hasReadAccessToFederation,
 	hasWriteAccessToContainer, hasWriteAccessToFederation,
@@ -27,6 +30,11 @@ const { validSession } = require('../auth');
 const { validateMany } = require('../common');
 
 const Permissions = {};
+
+Permissions.hasViewUserRoles = validateMany([Permissions.hasViewUserRoles, hasViewUserRoles]);
+Permissions.hasEditUserRoles = validateMany([Permissions.hasEditUserRoles, hasEditUserRoles]);
+Permissions.hasViewLicense = validateMany([Permissions.hasViewLicense, hasViewLicense]);
+Permissions.hasEditLicense = validateMany([Permissions.hasEditLicense, hasEditLicense]);
 
 Permissions.hasAccessToTeamspace = validateMany([convertAllUUIDs, validSession, isTeamspaceMember]);
 

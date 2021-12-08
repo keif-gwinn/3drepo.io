@@ -24,8 +24,24 @@ const {
 const { getContainerById, getFederationById, getModelById } = require('../../models/modelSettings');
 const { getProjectAdmins, modelExistsInProject } = require('../../models/projects');
 const { getTeamspaceAdmins, hasAccessToTeamspace } = require('../../models/teamspaces');
+const { hasViewUserRoles, hasEditUserRoles, hasViewLicense, hasEditLicense } = require('../../models/system');
 
 const Permissions = {};
+
+Permissions.hasViewUserRoles = async (username) => {
+	return await hasViewUserRoles(username)
+};
+
+Permissions.hasEditUserRoles = async (username) => {
+	return await hasEditUserRoles(username)
+}
+
+Permissions.hasViewLicense = async (username) => {	
+	return await hasViewLicense(username)
+}
+Permissions.hasEditLicense = async (username) => {
+	return await hasEditLicense(username)
+};
 
 Permissions.isTeamspaceAdmin = async (teamspace, username) => {
 	const admins = await getTeamspaceAdmins(teamspace);
