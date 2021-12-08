@@ -51,6 +51,68 @@ function initAPM() {
 	});
 }
 
+function initHoneyComb() {
+	const { NodeTracerProvider } = require('@opentelemetry/sdk-trace-node');
+	const { Resource } = require('@opentelemetry/resources');
+	const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions');
+
+	const process = require('process');
+	const { Metadata, credentials } = require("@grpc/grpc-js");
+
+	const { NodeSDK } = require('@opentelemetry/sdk-node');
+	const { getNodeAutoInstrumentations } = require('@opentelemetry/auto-instrumentations-node');
+	const { OTLPTraceExporter } = require("@opentelemetry/exporter-trace-otlp-grpc");
+
+	const metadata = new Metadata()
+	metadata.set('x-honeycomb-team', config.honeycomb.apikey);
+	metadata.set('x-honeycomb-dataset', config.honeycomb.dataset);
+	const traceExporter = new OTLPTraceExporter({
+		url: 'grpc://api.honeycomb.io:443/',
+		credentials: credentials.createSsl(),
+		metadata
+	});
+
+	const sdk = new NodeSDK({
+	resource: new Resource({
+		[SemanticResourceAttributes.SERVICE_NAME]: config.honeycomb.servicename,
+	}),
+	traceExporter,
+	instrumentations: [getNodeAutoInstrumentations({
+		// load custom configuration for http instrumentation
+		'@opentelemetry/instrumentation-http': {
+			applyCustomAttributesOnSpan: (span) => {
+			span.setAttribute('foo2', 'bar2');
+			},
+		},
+		// load custom configuration for express instrumentation
+		'@opentelemetry/instrumentation-express': {
+			applyCustomAttributesOnSpan: (span) => {
+			span.setAttribute('foo2', 'bar2');
+			},
+		},
+		// load custom configuration for express instrumentation
+		'@opentelemetry/instrumentation-mongodb': {
+			applyCustomAttributesOnSpan: (span) => {
+			span.setAttribute('foo2', 'bar2');
+			},
+		},	
+		})]
+	});
+
+	sdk.start()
+	.then(() => console.log('Tracing initialized'))
+	.catch((error) => console.log('Error initializing tracing', error));
+
+	process.on('SIGTERM', () => {
+	sdk.shutdown()
+		.then(() => console.log('Tracing terminated'))
+		.catch((error) => console.log('Error terminating tracing', error))
+		.finally(() => process.exit(0));
+	});
+
+}
+
+
 function setupSSL() {
 	if ("ssl" in config) {
 
@@ -129,6 +191,10 @@ function runServer() {
 
 	if (config.apm) {
 		initAPM();
+	}
+
+	if (config.honeycomb){
+		initHoneyComb();
 	}
 
 	// The core express application
