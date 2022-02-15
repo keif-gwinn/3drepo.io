@@ -15,9 +15,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const Path = {};
+const Path = require('path');
 
-Path.src = `${__dirname}/../../../src/v5`;
-Path.srcV4 = `${__dirname}/../../../src/v4`;
+const PathHelper = {};
 
-module.exports = Path;
+PathHelper.src = `${__dirname}/../../../src/v5`;
+PathHelper.srcV4 = `${__dirname}/../../../src/v4`;
+PathHelper.modelFolder = `${__dirname}/../resources/models`;
+PathHelper.imagesFolder = `${__dirname}/../resources/images`;
+PathHelper.objModel = Path.join(PathHelper.modelFolder, 'dummy.obj');
+PathHelper.image = Path.join(PathHelper.imagesFolder, 'valid.png');
+PathHelper.objModelUppercaseExt = Path.join(PathHelper.modelFolder, 'dummyUppercaseExt.OBJ');
+module.exports = PathHelper;

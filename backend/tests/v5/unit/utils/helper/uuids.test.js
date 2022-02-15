@@ -16,8 +16,10 @@
  */
 
 const { src } = require('../../../helper/path');
+const { generateUUIDString, generateUUID } = require('../../../helper/services');
 
 const UUIDHelper = require(`${src}/utils/helper/uuids`);
+const { isUUIDString } = require(`${src}/utils/helper/typeCheck`);
 
 const matchHelper = (func, string, match) => {
 	const res = func(string);
@@ -52,7 +54,63 @@ const testUUIDToString = () => {
 	});
 };
 
+const testGenerateUUID = () => {
+	describe('Generate UUID', () => {
+		test('should return UUID string', () => {
+			const res = UUIDHelper.generateUUID();
+			expect(isUUIDString(res)).toBe(false);
+			expect(isUUIDString(UUIDHelper.UUIDToString(res))).toBe(true);
+		});
+	});
+};
+
+const testGenerateUUIDString = () => {
+	describe('Generate string UUID', () => {
+		test('should return UUID string', () => {
+			const res = UUIDHelper.generateUUIDString();
+			expect(isUUIDString(res)).toBe(true);
+		});
+	});
+};
+
+const testLookUpTable = () => {
+	describe('LookUpTable test', () => {
+		test('should construct and function fine without data', () => {
+			const lut = new UUIDHelper.UUIDLookUpTable();
+			expect(lut.has('a')).toBe(false);
+			expect(lut.has()).toBe(false);
+			expect(lut.has(generateUUIDString())).toBe(false);
+			expect(lut.has(generateUUID())).toBe(false);
+
+			const uuid = generateUUID();
+			lut.add(uuid);
+			expect(lut.has(uuid)).toBe(true);
+			expect(lut.has(UUIDHelper.UUIDToString(uuid))).toBe(true);
+		});
+
+		test('should construct and function fine without data', () => {
+			const exists1 = generateUUID();
+			const exists2 = generateUUID();
+			const lut = new UUIDHelper.UUIDLookUpTable([exists1, exists2]);
+			expect(lut.has(exists1)).toBe(true);
+			expect(lut.has(exists2)).toBe(true);
+			expect(lut.has('a')).toBe(false);
+			expect(lut.has()).toBe(false);
+			expect(lut.has(generateUUIDString())).toBe(false);
+			expect(lut.has(generateUUID())).toBe(false);
+
+			const uuid = generateUUID();
+			lut.add(uuid);
+			expect(lut.has(uuid)).toBe(true);
+			expect(lut.has(UUIDHelper.UUIDToString(uuid))).toBe(true);
+		});
+	});
+};
+
 describe('utils/helper/uuid', () => {
 	testStringToUUID();
 	testUUIDToString();
+	testGenerateUUID();
+	testGenerateUUIDString();
+	testLookUpTable();
 });

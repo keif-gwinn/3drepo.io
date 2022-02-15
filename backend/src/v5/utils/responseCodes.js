@@ -15,6 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 const { toCamelCase, toConstantCase } = require('./helper/strings');
+const { logfile } = require('./config');
 const { logger } = require('./logger');
 
 const ResponseCodes = {};
@@ -24,7 +25,14 @@ ResponseCodes.templates = {
 
 	// Auth
 	notLoggedIn: { message: 'You are not logged in', status: 401 },
+	alreadyLoggedIn: { message: 'You are already logged in', status: 401 },
 	notAuthorized: { message: 'You do not have sufficient access rights for this action', status: 401 },
+	licenceExpired: { message: 'Licence expired.', status: 401 },
+	tooManyLoginAttempts: { message: 'Too many unsuccessful login attempts! Account locked', status: 400 },
+	userNotVerified: { message: 'Account not yet verified. Please check your email.', status: 400 },
+	incorrectUsernameOrPassword: { message: 'Incorrect username or password', status: 400 },
+	incorrectPassword: { message: 'Incorrect password', status: 400 },
+	userDoesNotHaveAvatar: { message: 'User does not have an avatar', status: 404 },
 
 	// Fail safe
 	unknown: { message: 'Unknown error occured. Please contact support.', status: 500 },
@@ -38,15 +46,35 @@ ResponseCodes.templates = {
 	// Project related error
 	projectNotFound: { message: 'Project not found.', status: 404 },
 
+	// Model related error
+	modelNotFound: { message: 'Model not found.', status: 404 },
+
 	// Federation related error
 	federationNotFound: { message: 'Federation not found.', status: 404 },
 
-	// Model related error
-	modelNotFound: { message: 'Model not found.', status: 404 },
+	// Container related error
 	containerNotFound: { message: 'Container not found.', status: 404 },
-
-	// Revision related error
+	containerIsSubModel: { message: 'Container is a submodel.', status: 400 },
 	revisionNotFound: { message: 'Revision not found.', status: 404 },
+	groupNotFound: { message: 'Group not found.', status: 404 },
+
+	// File upload related error
+	unsupportedFileFormat: { message: 'The file format is not supported', status: 400 },
+	maxSizeExceeded: { message: 'The file is bigger than the maximum size allowed', status: 400 },
+	quotaLimitExceeded: { message: 'Insufficient quota.', status: 401 },
+
+	// View related error
+	viewNotFound: { message: 'View not found', status: 404 },
+
+	// Legend related error
+	legendNotFound: { message: 'Legend not found', status: 404 },
+
+	// Invalid Arguments
+	invalidArguments: { message: 'The arguments provided are not valid', status: 400 },
+
+	// Queue related
+	queueConnectionError: { message: 'There was a problem connecting to the queue. Please contact support', status: 500 },
+	queueInsertionFailed: { message: 'Failed to insert an item into the queue. Please contact support', status: 500 },
 };
 
 Object.keys(ResponseCodes.templates).forEach((key) => {
@@ -104,9 +132,14 @@ ResponseCodes.createResponseCode = (errCode, message) => {
 	const codeExists = ResponseCodes.codeExists(errCode?.code);
 	if (!codeExists) {
 		const isError = errCode instanceof Error;
+		if (isError && !logfile.silent) {
+			// eslint-disable-next-line
+			console.error(errCode)
+		}
+
 		logger.logError('Unrecognised error code', isError ? JSON.stringify(errCode, ['message', 'arguments', 'type', 'name', 'stack']) : errCode);
 	}
-	const res = codeExists ? ResponseCodes.templates[toCamelCase(errCode.code)] : ResponseCodes.templates.unknown;
+	const res = codeExists ? errCode : ResponseCodes.templates.unknown;
 	return message ? { ...res, message } : res;
 };
 

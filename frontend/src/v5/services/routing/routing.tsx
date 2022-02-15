@@ -34,12 +34,17 @@ export const uriCombine = (uri, path) => {
 	return val;
 };
 
-// eslint-disable-next-line react/prop-types
+const getBaseDomain = () => `${window.location.protocol}//${window.location.hostname}`;
+
+export const viewerShareLink = (teamspace: string, containerOrFederationId: string) => (
+	`${getBaseDomain()}/viewer/${teamspace}/${containerOrFederationId}`
+);
+
 export const RouteExcept = ({ path, exceptPath, children }) => (
 	<Switch>
 		<Route exact path={exceptPath} />
 		<Route path={path}>
-			{...children}
+			{children}
 		</Route>
 	</Switch>
 );

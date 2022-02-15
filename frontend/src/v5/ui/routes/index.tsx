@@ -14,16 +14,58 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import { theme } from '@/v5/ui/themes/theme';
-import { MuiThemeProvider } from '@material-ui/core';
-import { ThemeProvider } from 'styled-components';
-import React from 'react';
-import { Dashboard } from './dashboard';
 
-export const Root = () => (
-	<ThemeProvider theme={theme}>
-		<MuiThemeProvider theme={theme}>
-			<Dashboard />
-		</MuiThemeProvider>
-	</ThemeProvider>
-);
+import React from 'react';
+import { isNull } from 'lodash';
+import { useHistory } from 'react-router-dom';
+import { MuiThemeProvider, StylesProvider } from '@material-ui/core';
+import { ThemeProvider } from 'styled-components';
+
+import { theme } from '@/v5/ui/themes/theme';
+import { CurrentUserHooksSelectors } from '@/v5/services/selectorsHooks/currentUserSelectors.hooks';
+import { AuthHooksSelectors } from '@/v5/services/selectorsHooks/authSelectors.hooks';
+import { CurrentUserActionsDispatchers } from '@/v5/services/actionsDispatchers/currentUsersActions.dispatchers';
+import { AuthActionsDispatchers } from '@/v5/services/actionsDispatchers/authActions.dispatchers';
+import { TeamspacesActionsDispatchers } from '@/v5/services/actionsDispatchers/teamspacesActions.dispatchers';
+import { getIntlProviderProps } from '@/v5/services/intl';
+import { IntlProvider } from 'react-intl';
+import { Dashboard } from './dashboard';
+import { V4Adapter } from '../v4Adapter/v4Adapter';
+
+export const Root = () => {
+	const history = useHistory();
+	const userName: string = CurrentUserHooksSelectors.selectUsername();
+	const isAuthenticated: boolean | null = AuthHooksSelectors.selectIsAuthenticated();
+
+	React.useEffect(() => {
+		AuthActionsDispatchers.authenticate();
+	}, []);
+
+	React.useEffect(() => {
+		if (userName) {
+			CurrentUserActionsDispatchers.fetchUser(userName);
+		}
+
+		if (isAuthenticated) {
+			TeamspacesActionsDispatchers.fetch();
+		}
+
+		if (!isNull(isAuthenticated) && !isAuthenticated) {
+			history.push('/');
+		}
+	}, [userName, isAuthenticated]);
+
+	return (
+		<ThemeProvider theme={theme}>
+			<MuiThemeProvider theme={theme}>
+				<StylesProvider injectFirst>
+					<IntlProvider {...getIntlProviderProps()}>
+						<V4Adapter>
+							<Dashboard />
+						</V4Adapter>
+					</IntlProvider>
+				</StylesProvider>
+			</MuiThemeProvider>
+		</ThemeProvider>
+	);
+};

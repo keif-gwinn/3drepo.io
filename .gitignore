@@ -14,9 +14,6 @@ frontend/custom/test
 frontend/docs
 frontend/tests/e2e/built
 
-frontend/yarn.lock
-backend/yarn.lock
-
 yarn-error.log
 bower_components
 
@@ -110,3 +107,4 @@ package-lock.json
 .vs/3drepo.io/v16/Browse.VC.opendb
 backend/globalConfig.json
 *.swn
+.vs/

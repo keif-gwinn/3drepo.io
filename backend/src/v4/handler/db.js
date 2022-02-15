@@ -55,19 +55,19 @@
 
 		let authStr = "";
 		if(username && password) {
-			authStr = `${username}:${password}@`;
+			authStr = `${username}:${encodeURIComponent(password)}@`;
 		} else if(config.db.username && config.db.password) {
-			authStr = `${config.db.username}:${config.db.password}@`;
+			authStr = `${config.db.username}:${encodeURIComponent(config.db.password)}@`;
 		}
 
-		let connectString = `mongodb://${authStr}${getHostPorts()}/`;
+		let connectString = `mongodb://${authStr}${getHostPorts()}/?`;
 
 		connectString += config.db.replicaSet ? "&replicaSet=" + config.db.replicaSet : "";
+		connectString += config.db.authSource ? "&authSource=" + config.db.authSource : "";
 
 		if (Number.isInteger(config.db.timeout)) {
 			connectString += "&socketTimeoutMS=" + config.db.timeout;
 		}
-
 		return connectString;
 	}
 
@@ -111,6 +111,11 @@
 			Handler.disconnect();
 			return Promise.reject(err);
 		});
+	};
+
+	Handler.aggregate = async (database, colName, pipelines) => {
+		const collection = await Handler.getCollection(database, colName);
+		return collection.aggregate(pipelines).toArray();
 	};
 
 	/**
@@ -274,7 +279,8 @@
 	Handler.getSessionStore = function (session) {
 		const MongoDBStore = require("connect-mongodb-session")(session);
 		return new MongoDBStore({
-			uri: getURL("admin"),
+			uri: getURL(),
+			databaseName:"admin",
 			collection: "sessions"
 		});
 	};

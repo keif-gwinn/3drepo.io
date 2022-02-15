@@ -15,12 +15,22 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const { getContainerById, getContainers } = require('../../../../models/modelSettings');
-const { getLatestRevision, getRevisionCount } = require('../../../../models/revisions');
-const { getModelList } = require('./commons/modelList');
+const { addModel, deleteModel, getModelList } = require('./commons/modelList');
+const { appendFavourites, deleteFavourites } = require('./commons/favourites');
+const { getContainerById, getContainers, updateModelSettings } = require('../../../../models/modelSettings');
+const { getLatestRevision, getRevisionCount, getRevisions, updateRevisionStatus } = require('../../../../models/revisions');
+const Groups = require('./commons/groups');
+const fs = require('fs/promises');
 const { getProjectById } = require('../../../../models/projects');
+const { logger } = require('../../../../utils/logger');
+const { queueModelUpload } = require('../../../../services/queue');
+const { timestampToString } = require('../../../../utils/helper/dates');
 
-const Containers = {};
+const Containers = { ...Groups };
+
+Containers.addContainer = addModel;
+
+Containers.deleteContainer = deleteModel;
 
 Containers.getContainerList = async (teamspace, project, user) => {
 	const { models } = await getProjectById(teamspace, project, { permissions: 1, models: 1 });
@@ -32,7 +42,7 @@ Containers.getContainerList = async (teamspace, project, user) => {
 Containers.getContainerStats = async (teamspace, project, container) => {
 	let latestRev = {};
 	const [settings, revCount] = await Promise.all([
-		getContainerById(teamspace, container, { name: 1, type: 1, properties: 1, status: 1 }),
+		getContainerById(teamspace, container, { name: 1, type: 1, properties: 1, status: 1, errorReason: 1 }),
 		getRevisionCount(teamspace, container),
 	]);
 
@@ -41,18 +51,51 @@ Containers.getContainerStats = async (teamspace, project, container) => {
 	} catch {
 		// do nothing. A container can have 0 revision.
 	}
-
-	return {
+	const stats = {
 		type: settings.type,
 		code: settings.properties.code,
 		status: settings.status,
-		units: settings.properties.unit,
+		unit: settings.properties.unit,
 		revisions: {
 			total: revCount,
 			lastUpdated: latestRev.timestamp,
-			latestRevision: latestRev.tag || latestRev._id,
+			latestRevision: latestRev.tag || timestampToString(latestRev.timestamp?.getTime()),
 		},
 	};
+
+	if (settings.status === 'failed' && settings.errorReason) {
+		stats.errorReason = {
+			message: settings.errorReason.message,
+			timestamp: settings.errorReason.timestamp,
+		};
+	}
+
+	return stats;
 };
+
+Containers.getRevisions = (teamspace, container, showVoid) => getRevisions(teamspace,
+	container, showVoid, { _id: 1, author: 1, timestamp: 1, tag: 1, void: 1, desc: 1 });
+
+Containers.newRevision = (teamspace, model, data, file) => queueModelUpload(teamspace, model, data, file)
+	.finally(() => fs.rm(file.path).catch((e) => {
+		logger.logError(`Failed to delete uploaded file: ${e.message}`);
+	}));
+
+Containers.updateRevisionStatus = updateRevisionStatus;
+
+Containers.appendFavourites = async (username, teamspace, project, favouritesToAdd) => {
+	const accessibleContainers = await Containers.getContainerList(teamspace, project, username);
+	return appendFavourites(username, teamspace, accessibleContainers, favouritesToAdd);
+};
+
+Containers.deleteFavourites = async (username, teamspace, project, favouritesToRemove) => {
+	const accessibleContainers = await Containers.getContainerList(teamspace, project, username);
+	return deleteFavourites(username, teamspace, accessibleContainers, favouritesToRemove);
+};
+
+Containers.updateSettings = updateModelSettings;
+
+Containers.getSettings = (teamspace, container) => getContainerById(teamspace,
+	container, { corID: 0, account: 0, permissions: 0 });
 
 module.exports = Containers;
