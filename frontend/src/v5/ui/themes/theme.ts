@@ -152,6 +152,11 @@ const typography: TypographyOptions = {
 	},
 };
 
+const hexToOpacity = (hex: string, opacityInPercentage: number): string => {
+	const formattedOpacity = (opacityInPercentage / 100) * 255;
+	return hex + Math.floor(formattedOpacity).toString(16);
+};
+
 export const theme = createTheme({
 	palette: {
 		primary: {
@@ -241,13 +246,14 @@ export const theme = createTheme({
 						top: '-35.5px',
 						left: '-13px',
 						color: COLOR.BASE_MAIN,
+						transition: 'color 0s',
 
 						'&.Mui-disabled': {
 							color: COLOR.BASE_LIGHT,
 						},
 
 						'&:not(.Mui-error).Mui-focused': {
-							color: COLOR.TERTIARY_MAIN,
+							color: COLOR.PRIMARY_MAIN,
 						},
 					},
 				},
@@ -260,6 +266,7 @@ export const theme = createTheme({
 			styleOverrides: {
 				root: {
 					width: '100%',
+					borderRadius: 5,
 				},
 				underline: {
 					[`&:before,
@@ -559,11 +566,18 @@ export const theme = createTheme({
 					},
 					[`&:hover:not(.Mui-error) .MuiOutlinedInput-notchedOutline, 
 					  &.Mui-focused:not(.Mui-error) .MuiOutlinedInput-notchedOutline`]: {
-						borderColor: COLOR.TERTIARY_MAIN,
+						borderColor: COLOR.PRIMARY_MAIN,
 						borderWidth: 1,
 					},
-					'&.Mui-focused input': {
-						color: COLOR.SECONDARY_MAIN,
+					'&.Mui-focused': {
+						'& input': {
+							color: COLOR.SECONDARY_MAIN,
+						},
+						'&:not(.Mui-error) fieldset': {
+							borderRadius: 5,
+							overflow: 'hidden',
+							boxShadow: `0 0 0 2px ${hexToOpacity(COLOR.PRIMARY_MAIN, 20)}`,
+						},
 					},
 					'&.Mui-disabled': {
 						'& input': {
@@ -581,6 +595,10 @@ export const theme = createTheme({
 						'& path': {
 							fill: COLOR.ERROR_MAIN,
 						},
+					},
+
+					'&:not(.Mui-error).Mui-focused': {
+						color: COLOR.PRIMARY_MAIN,
 					},
 				},
 			},
@@ -604,8 +622,12 @@ export const theme = createTheme({
 					width: '100%',
 					boxSizing: 'border-box',
 					pointerEvents: 'auto',
-					'& fieldset, &:focus fieldset, &:active fieldset': {
-						border: 0,
+					'&:hover': {
+						borderColor: COLOR.PRIMARY_MAIN,
+					},
+					'&[aria-expanded=true]': {
+						borderColor: COLOR.PRIMARY_MAIN,
+						boxShadow: `0 0 0 2px ${hexToOpacity(COLOR.PRIMARY_MAIN, 20)}`,
 					},
 					'& ~ svg': {
 						position: 'absolute',
@@ -614,6 +636,12 @@ export const theme = createTheme({
 						pointerEvents: 'none',
 						'& path': {
 							fill: COLOR.BASE_MAIN,
+						},
+					},
+					'& ~ fieldset, &:focus ~ fieldset, &:active ~ fieldset': {
+						border: 0,
+						'&.MuiOutlinedInput-notchedOutline': {
+							boxShadow: 'none',
 						},
 					},
 				},
@@ -626,9 +654,10 @@ export const theme = createTheme({
 					...typography.body1,
 					fontSize: '12px',
 					color: COLOR.BASE_MAIN,
+					transition: 'color 0s',
 
 					'&:not(.Mui-error).Mui-focused': {
-						color: COLOR.TERTIARY_MAIN,
+						color: COLOR.PRIMARY_MAIN,
 					},
 				},
 				formControl: {
