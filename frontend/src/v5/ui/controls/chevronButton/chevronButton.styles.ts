@@ -24,15 +24,29 @@ export const StyledIconButton = styled(IconButton)<{ $isOn?: boolean, $isLoading
 	margin: 0 10px 0 0;
 	display: flex;
 	align-items: center;
+	border: 1px solid ${({ theme }) => theme.palette.secondary.main};
+	background-color: ${({ theme }) => theme.palette.tertiary.lightest};
+	
+	&:active, &:focus, &:hover {
+		background-color: inherit;
+	}
 
 	svg {
 		height: 7px;
 		width: 100%;
 		margin-top: 2px;
+
+		path {
+			fill: ${({ theme }) => theme.palette.secondary.main};
+		}
 	}
+		
 
 	${({ $isOn }) => $isOn && css`
-		background-color: ${({ theme }) => theme.palette.secondary.main};
+		&, &:active, &:focus, &:hover {
+			background-color: ${({ theme }) => theme.palette.secondary.main};
+		}
+		border-color: ${({ theme }) => theme.palette.secondary.main};
 
 		svg {
 			margin-bottom: 3px;
@@ -47,28 +61,6 @@ export const StyledIconButton = styled(IconButton)<{ $isOn?: boolean, $isLoading
 	${({ $isLoading }) => $isLoading && css`
 		pointer-events: none;
 	`}
-
-	border: 1px solid ${({ theme }) => theme.palette.secondary.main};
-
-	&:hover {
-		border-style: none;
-		background-color: ${({ theme }) => theme.palette.base.lightest};
-		
-		svg {
-			path {
-				fill: ${({ theme }) => theme.palette.secondary.main};
-			}
-		}
-	}
-
-	&:active {
-		background-color: ${({ theme }) => theme.palette.secondary.light};
-	}
-
-	&.Mui-focusVisible {
-		background-color: ${({ theme }) => theme.palette.primary.contrast};
-		border-style: solid;
-	}
 
 	:disabled {
 		background-color: transparent;
