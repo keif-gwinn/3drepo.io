@@ -15,11 +15,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 import { FunctionComponent } from 'react';
-import { InputAdornment, InputLabel } from '@mui/material';
+import InputLabel from '@mui/material/InputLabel';
 import { Field } from 'formik';
 
-import { isV5 } from '@/v4/helpers/isV5';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { ISSUE_PRIORITIES, ISSUE_STATUSES } from '../../../../../../constants/issues';
 import { LONG_TEXT_CHAR_LIM } from '../../../../../../constants/viewerGui';
 import { canChangeStatus } from '../../../../../../helpers/issues';
@@ -63,11 +61,6 @@ export const MainIssueFormTab: FunctionComponent<IProps> = ({
 	active, issue, permissions, topicTypes, currentUser, myJob, isNew, canChangeAssigned,
 	canEditBasicProperty, canEditViewpoint, jobs, disableViewer, ...props
 }) => {
-	const v5Props = {
-		InputProps: {
-			endAdornment: <InputAdornment position="end"><KeyboardArrowDownIcon /></InputAdornment>,
-		}
-	}
 	return (
 		<Content active={active}>
 			<Container>
@@ -83,12 +76,6 @@ export const MainIssueFormTab: FunctionComponent<IProps> = ({
 						mutable={!isNew}
 						enableMarkdown
 						inputProps={{ maxLength: LONG_TEXT_CHAR_LIM }}
-						{...(isV5() && ({
-							placeholder: 'Type a description',
-							disableShowDefaultUnderline: true,
-							className: 'description',
-						}
-						))}
 					/>
 				)} />
 			</Container>
@@ -174,7 +161,6 @@ export const MainIssueFormTab: FunctionComponent<IProps> = ({
 								inputFormat={NAMED_MONTH_DATE_FORMAT}
 								disabled={!canEditBasicProperty}
 								placeholder="Choose a due date"
-								{...(isV5() && v5Props)}
 							/>
 						</DateFieldContainer>
 					)} />

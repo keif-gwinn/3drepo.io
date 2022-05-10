@@ -31,7 +31,7 @@ export default css`
 		${StyledButton} {
 			border: solid 1px ${({ theme }) => theme.palette.secondary.main};
 			color: ${({ theme }) => theme.palette.secondary.main};
-			background-color: transparent;
+			background-color: ${({ theme }) => theme.palette.primary.contrast};
 			padding: 0 7px;
 			font-size: 10px;
 			height: 24px;

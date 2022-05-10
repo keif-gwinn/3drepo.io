@@ -62,7 +62,7 @@ export const StyledTextField = styled(TextField)`
 	}
 `;
 
-export const StyledMarkdownField = styled(MarkdownField)<{ $isPlaceholder?: boolean }>`
+export const StyledMarkdownField = styled(MarkdownField)`
 	&& {
 		display: block;
 		position: relative;
@@ -70,10 +70,6 @@ export const StyledMarkdownField = styled(MarkdownField)<{ $isPlaceholder?: bool
 		min-height: 14px;
 		font-size: 14px;
 		overflow: hidden;
-
-		/* TODO: fix after new palette is released */
-		${({ $isPlaceholder }) => $isPlaceholder && css`color: #C1C8D5;`}
-
 	}
 `;
 
