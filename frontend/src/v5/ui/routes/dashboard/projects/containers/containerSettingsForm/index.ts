@@ -15,6 +15,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { CreateContainerForm } from './createContainerForm.component';
+import { ContainerSettingsForm } from './containerSettingsForm.component';
 
-export default CreateContainerForm;
+export default ContainerSettingsForm;

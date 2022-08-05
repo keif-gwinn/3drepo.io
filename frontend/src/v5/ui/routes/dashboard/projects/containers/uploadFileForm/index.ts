@@ -15,4 +15,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-export { UploadFileForm } from './uploadFileForm.component';
+import { UploadFileForm } from './uploadFileForm.component';
+
+export default UploadFileForm;

@@ -15,7 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { memo, useContext, useEffect, useState } from 'react';
+import { lazy, memo, Suspense, useContext, useEffect, useState } from 'react';
 import { FormattedMessage } from 'react-intl';
 import { useParams } from 'react-router-dom';
 import { Tooltip } from '@mui/material';
@@ -47,8 +47,9 @@ import { formatDate, formatMessage } from '@/v5/services/intl';
 import { prefixBaseDomain, viewerRoute } from '@/v5/services/routing/routing';
 import { DialogsActionsDispatchers } from '@/v5/services/actionsDispatchers/dialogsActions.dispatchers';
 import { ContainerEllipsisMenu } from './containerEllipsisMenu/containerEllipsisMenu.component';
-import { ContainerSettingsForm } from '../../containerSettingsForm/containerSettingsForm.component';
 import { IsMainList } from '../../containers.component';
+
+const ContainerSettingsForm = lazy(() => import('../../containerSettingsForm'));
 
 interface IContainerListItem {
 	isSelected: boolean;
@@ -177,11 +178,13 @@ export const ContainerListItem = memo(({
 					status={container.status}
 				/>
 			)}
-			<ContainerSettingsForm
-				open={containerSettingsOpen}
-				container={container}
-				onClose={() => setContainerSettingsOpen(false)}
-			/>
+			<Suspense fallback={<div />}>
+				<ContainerSettingsForm
+					open={containerSettingsOpen}
+					container={container}
+					onClose={() => setContainerSettingsOpen(false)}
+				/>
+			</Suspense>
 		</DashboardListItem>
 	);
 }, isEqual);

@@ -15,14 +15,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { createContext, useState, useEffect } from 'react';
+import { createContext, useState, useEffect, lazy, Suspense } from 'react';
 import { useParams } from 'react-router-dom';
 
 import AddCircleIcon from '@assets/icons/add_circle.svg';
 import { DashboardListEmptyText, Divider } from '@components/dashboard/dashboardList/dashboardList.styles';
 import { DashboardSkeletonList } from '@components/dashboard/dashboardList/dashboardSkeletonList';
 import { Button } from '@controls/button';
-import { CreateContainerForm } from '@/v5/ui/routes/dashboard/projects/containers/createContainerForm/createContainerForm.component';
 import { FormattedMessage } from 'react-intl';
 import { enableRealtimeNewContainer } from '@/v5/services/realtime/container.events';
 import { SearchContextComponent } from '@controls/search/searchContext';
@@ -30,8 +29,10 @@ import { CONTAINERS_SEARCH_FIELDS } from '@/v5/store/containers/containers.helpe
 import { ContainersList } from './containersList';
 import { SkeletonListItem } from './containersList/skeletonListItem';
 import { useContainersData } from './containers.hooks';
-import { UploadFileForm } from './uploadFileForm/uploadFileForm.component';
 import { DashboardParams } from '../../../routes.constants';
+
+const CreateContainerForm = lazy(() => import('./createContainerForm'));
+const UploadFileForm = lazy(() => import('./uploadFileForm'));
 
 export const IsMainList = createContext(false);
 
@@ -115,11 +116,13 @@ export const Containers = (): JSX.Element => {
 					/>
 				</SearchContextComponent>
 			</IsMainList.Provider>
-			<CreateContainerForm
-				open={createContainerOpen}
-				onClickClose={() => setCreateContainerOpen(false)}
-			/>
-			<UploadFileForm openState={uploadModalOpen} onClickClose={onClickClose} />
+			<Suspense fallback={<div />}>
+				<CreateContainerForm
+					open={createContainerOpen}
+					onClickClose={() => setCreateContainerOpen(false)}
+				/>
+				<UploadFileForm openState={uploadModalOpen} onClickClose={onClickClose} />
+			</Suspense>
 		</>
 	);
 };
