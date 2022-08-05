@@ -16,6 +16,7 @@
  */
 
 import { createActions, createReducer } from 'reduxsauce';
+import { differenceBy, isEmpty, isEqual } from 'lodash';
 import { Constants } from '@/v5/helpers/actions.helper';
 import { getNullableDate } from '@/v5/helpers/getNullableDate';
 import { prepareSingleContainerData } from '@/v5/store/containers/containers.helpers';
@@ -71,28 +72,42 @@ export const setFavourite = (state = INITIAL_STATE, {
 export const fetchContainersSuccess = (state = INITIAL_STATE, {
 	projectId,
 	containers,
-}: FetchContainersSuccessAction): IContainersState => ({
-	...state,
-	containersByProject: {
-		...state.containersByProject,
-		[projectId]: containers,
-	},
-});
+}: FetchContainersSuccessAction): IContainersState => {
+	const oldContainers = state.containersByProject[projectId] || [];
+	const newContainers = oldContainers ? differenceBy(containers, oldContainers, (c) => c._id) : containers;
+	if (isEmpty(newContainers)) return state;
+	return ({
+		...state,
+		containersByProject: {
+			...state.containersByProject,
+			[projectId]: [
+				...oldContainers,
+				...newContainers,
+			],
+		},
+	});
+};
 
 export const fetchStatsSuccess = (state = INITIAL_STATE, {
 	projectId,
 	containerId,
 	containerStats,
-}: FetchContainerStatsSuccessAction): IContainersState => ({
-	...state,
-	containersByProject: {
-		...state.containersByProject,
-		[projectId]: state.containersByProject[projectId].map((container) => {
-			if (containerId !== container._id) return container;
-			return prepareSingleContainerData(container, containerStats);
-		}),
-	},
-});
+}: FetchContainerStatsSuccessAction): IContainersState => {
+	const stateContainer = state.containersByProject[projectId].find((cont) => cont._id === containerId);
+	const preparedStats = prepareSingleContainerData(stateContainer, containerStats);
+	if (isEqual(stateContainer, preparedStats)) return state;
+
+	return ({
+		...state,
+		containersByProject: {
+			...state.containersByProject,
+			[projectId]: state.containersByProject[projectId].map((container) => {
+				if (containerId !== container._id) return container;
+				return preparedStats;
+			}),
+		},
+	});
+};
 
 export const fetchContainerViewsSuccess = (state = INITIAL_STATE, {
 	projectId,
