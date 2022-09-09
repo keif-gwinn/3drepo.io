@@ -22,7 +22,7 @@ import { useContext } from 'react';
 import { ColumnSortComponent, SortContext, SortOrder } from '@controls/columnSort/columnSort.component';
 
 export default {
-	title: 'Crazy/ColumnSortContext',
+	title: 'Dashboard/ColumnSortContext',
 	component: ColumnSortComponent,
 	argTypes: {
 		items: { control: 'object' },
@@ -84,5 +84,5 @@ const Template: ComponentStory<typeof ColumnSortComponent> = (args) => (
 export const ListWithSortedItems = Template.bind({});
 ListWithSortedItems.args = {
 	items: [{ name: 'Winona', age: 43 }, { name: 'David', age: 42 }, { name: 'Millie', age: 14 }],
-	defaultOrder: { column: 'name', order: SortOrder.Ascending },
+	defaultSort: { column: 'name', order: SortOrder.Ascending },
 };

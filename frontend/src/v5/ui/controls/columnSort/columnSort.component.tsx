@@ -67,7 +67,16 @@ const sortingFunction = (column) => (a, b): number => {
 export const ColumnSortComponent = ({ items, children, defaultSort }:Props) => {
 	const [sortOrder, setSortOrder] = useState(defaultSort);
 	const sortBy = (column: string) => {
-		const order = (sortOrder || {}).order === SortOrder.Ascending ? SortOrder.Descending : SortOrder.Ascending;
+		let order = SortOrder.Ascending;
+
+		if (sortOrder.column === column) {
+			order = sortOrder.order === SortOrder.Ascending ? SortOrder.Descending : SortOrder.Ascending;
+		}
+
+		console.log('from onclick before:' +  JSON.stringify(sortOrder));
+
+		console.log('from onclick:' + JSON.stringify({ column, order }));
+
 		setSortOrder({ column, order });
 	};
 
@@ -84,7 +93,11 @@ export const ColumnSortComponent = ({ items, children, defaultSort }:Props) => {
 
 		const sortedItems = [...items].sort(sortingFunctionWithDirection);
 
-		setContextValue({ ...contextValue, sortedItems });
+
+		console.log('from useeffect' + JSON.stringify(sortOrder));
+
+
+		setContextValue({ ...contextValue, sortedItems, sortOrder });
 	}, [sortOrder]);
 
 	return (
