@@ -17,10 +17,10 @@
 
 import styled, { css } from 'styled-components';
 import { Button as ButtonComponent } from '@controls/button';
-import { SortingDirection } from '@components/dashboard/dashboardList/dashboardList.types';
 import { FixedOrGrowContainer } from '@controls/fixedOrGrowContainer';
 import { Typography } from '@controls/typography';
 import { Display } from '@/v5/ui/themes/media';
+import { SortOrder } from '@controls/columnSort/columnSort.component';
 
 export const Container = styled(FixedOrGrowContainer)<{ hideWhenSmallerThan?: Display; hidden: boolean; }>`
 	align-items: center;
@@ -54,7 +54,7 @@ export const Button = styled(ButtonComponent).attrs({
 	}
 `;
 
-export const Indicator = styled.div<{ sortingDirection?: string }>`
+export const Indicator = styled.div<{ sortingDirection?: SortOrder }>`
 	margin-left: 5px;
 	display: flex;
 	justify-content: center;
@@ -66,7 +66,7 @@ export const Indicator = styled.div<{ sortingDirection?: string }>`
 		width: 100%;
 	}
 
-	${({ sortingDirection }) => sortingDirection === SortingDirection.ASCENDING && css`
+	${({ sortingDirection }) => sortingDirection === SortOrder.Ascending && css`
 		svg {
 			transform: rotate(180deg);
 		}

@@ -15,16 +15,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Dispatch, ReactNode } from 'react';
+import { Dispatch, ReactNode, useContext } from 'react';
 import ArrowIcon from '@assets/icons/arrow.svg';
-import { SortingDirection } from '@components/dashboard/dashboardList/dashboardList.types';
 import { FixedOrGrowContainerProps } from '@controls/fixedOrGrowContainer';
+import { SortContext } from '@controls/columnSort/columnSort.component';
 import { Container, Button, Indicator, Label } from './dashboardListHeaderLabel.styles';
 
 interface IDashboardListHeaderLabel extends FixedOrGrowContainerProps{
 	children?: ReactNode;
-	sortingDirection?: SortingDirection;
-	sort?: boolean;
 	name?: string;
 	onClick?: Dispatch<void>;
 	hidden?: boolean;
@@ -32,31 +30,40 @@ interface IDashboardListHeaderLabel extends FixedOrGrowContainerProps{
 
 export const DashboardListHeaderLabel = ({
 	children,
-	sortingDirection,
-	onClick,
 	hidden = false,
-	sort = false,
+	name,
 	...containerProps
-}: IDashboardListHeaderLabel): JSX.Element => (
-	<Container
-		{...containerProps}
-		hidden={hidden}
-	>
-		{sort ? (
-			<Button onClick={onClick}>
+}: IDashboardListHeaderLabel): JSX.Element => {
+	const { sortOrder, sortBy } = useContext(SortContext);
+
+	const sortingDirection = sortOrder?.column === name ? sortOrder.order : null;
+
+	const onClick = (e) => {
+		e.stopPropagation();
+		sortBy(name);
+	};
+
+	return (
+		<Container
+			{...containerProps}
+			hidden={hidden}
+		>
+			{name ? (
+				<Button onClick={onClick}>
+					<Label>
+						{children}
+					</Label>
+					{sortingDirection && (
+						<Indicator sortingDirection={sortingDirection}>
+							<ArrowIcon />
+						</Indicator>
+					)}
+				</Button>
+			) : (
 				<Label>
 					{children}
 				</Label>
-				{sortingDirection && (
-					<Indicator sortingDirection={sortingDirection}>
-						<ArrowIcon />
-					</Indicator>
-				)}
-			</Button>
-		) : (
-			<Label>
-				{children}
-			</Label>
-		)}
-	</Container>
-);
+			)}
+		</Container>
+	);
+};

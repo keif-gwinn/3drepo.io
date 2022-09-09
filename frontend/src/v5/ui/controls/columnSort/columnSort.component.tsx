@@ -23,20 +23,26 @@ export enum SortOrder {
 	Descending,
 }
 
+interface ColumnSortOrder {
+	column: string;
+	order: SortOrder
+}
+
 export interface SortingType<T> {
 	items: T[];
 	sortedItems: T[];
-	columnsSorting: Record<string, SortOrder>;
+	sortOrder: ColumnSortOrder | null;
 	sortBy: (columnName: string) => void
 }
 
-const defaultValue: SortingType<any> = { items: [], sortedItems: [], columnsSorting: {}, sortBy: () => {} };
+const defaultValue: SortingType<any> = { items: [], sortedItems: [], sortOrder: null, sortBy: () => {} };
 export const SortContext = createContext(defaultValue);
 SortContext.displayName = 'SortingContext';
 
 export interface Props {
 	items: any[];
 	children: any;
+	defaultSort: ColumnSortOrder | null;
 }
 
 const sortingFunction = (column) => (a, b): number => {
@@ -58,31 +64,28 @@ const sortingFunction = (column) => (a, b): number => {
 	return 0;
 };
 
-export const ColumnSort = ({ items, children }:Props) => {
-	const [columnsSorting, setColumns] = useState({});
-	const sortBy = (field: string) => {
-		let sortOrder = (columnsSorting[field] || SortOrder.Ascending);
-		sortOrder = sortOrder === SortOrder.Ascending ? SortOrder.Descending : SortOrder.Ascending;
-
-		setColumns({
-			...columnsSorting,
-			[field]: sortOrder,
-		});
+export const ColumnSortComponent = ({ items, children, defaultSort }:Props) => {
+	const [sortOrder, setSortOrder] = useState(defaultSort);
+	const sortBy = (column: string) => {
+		const order = (sortOrder || {}).order === SortOrder.Ascending ? SortOrder.Descending : SortOrder.Ascending;
+		setSortOrder({ column, order });
 	};
 
-	const [contextValue, setContextValue] = useState({ items, sortedItems: items, columnsSorting, sortBy });
+	// eslint-disable-next-line max-len
+	const [contextValue, setContextValue] = useState<SortingType<any>>({ items, sortedItems: items, sortOrder, sortBy });
 
 	useEffect(() => {
-		const sortingFunctionWithDirection = direction === SortingDirection.ASCENDING
-		? sortingFunction : (a: T, b: T) => sortingFunction(b, a);
+		if (!sortOrder) {
+			return;
+		}
 
-	return [...items].sort(sortingFunctionWithDirection);
-};
+		const sortingFunctionWithDirection = sortOrder.order === SortOrder.Ascending
+			? sortingFunction(sortOrder.column) : (a, b) => sortingFunction(sortOrder.column)(b, a);
 
+		const sortedItems = [...items].sort(sortingFunctionWithDirection);
 
-
-		setContextValue({ items, sortedItems, sortBy });
-	}, [columnsSorting]);
+		setContextValue({ ...contextValue, sortedItems });
+	}, [sortOrder]);
 
 	return (
 		<SortContext.Provider value={contextValue}>

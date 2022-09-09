@@ -16,20 +16,18 @@
  */
 
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-import { SearchContext, SearchContextComponent } from '@controls/search/searchContext';
-import { SearchInput } from '@controls/search/searchInput';
 import { DashboardListCollapse, DashboardListEmptyContainer, DashboardListEmptySearchResults, DashboardListHeader, DashboardListHeaderLabel, DashboardListItem } from '@components/dashboard/dashboardList';
-import { CollapseSideElementGroup } from '@/v5/ui/routes/dashboard/projects/containers/containersList/containersList.styles';
 import { DashboardListItemRow, DashboardListItemText } from '@components/dashboard/dashboardList/dashboardListItem/components';
 import { useContext } from 'react';
+import { ColumnSortComponent, SortContext, SortOrder } from '@controls/columnSort/columnSort.component';
 
 export default {
-	title: 'Dashboard/SearchContext',
-	component: SearchContextComponent,
+	title: 'Crazy/ColumnSortContext',
+	component: ColumnSortComponent,
 	argTypes: {
 		items: { control: 'object' },
 	},
-} as ComponentMeta<typeof SearchContextComponent>;
+} as ComponentMeta<typeof ColumnSortComponent>;
 
 const ObjectsListHeader = ({ columnNames, setSortConfig }) => (
 	<DashboardListHeader onSortingChange={setSortConfig}>
@@ -40,25 +38,18 @@ const ObjectsListHeader = ({ columnNames, setSortConfig }) => (
 );
 
 const ObjectsList = () => {
-	const { items, filteredItems } = useContext(SearchContext);
+	const { items, sortedItems } = useContext(SortContext);
 
 	return (
 		<DashboardListCollapse
-			title={<>Searchable list</>}
-			sideElement={(
-				<CollapseSideElementGroup>
-					<SearchInput
-						placeholder="Search containers..."
-					/>
-				</CollapseSideElementGroup>
-			)}
+			title={<>Sorted list</>}
 		>
 			{items.length > 0
 			&& (
 				<>
 					<ObjectsListHeader setSortConfig={() => { }} columnNames={Object.keys(items[0])} />
 					{
-						filteredItems.map((item) => (
+						sortedItems.map((item) => (
 							<DashboardListItem key={JSON.stringify(item)}>
 								<DashboardListItemRow>
 									{Object.keys(item).map((key) => (
@@ -73,7 +64,7 @@ const ObjectsList = () => {
 				</>
 			)}
 
-			{filteredItems.length === 0
+			{items.length === 0
 			&& (
 				<DashboardListEmptyContainer>
 					<DashboardListEmptySearchResults />
@@ -83,13 +74,15 @@ const ObjectsList = () => {
 		</DashboardListCollapse>
 	);
 };
-const Template: ComponentStory<typeof SearchContextComponent> = (args) => (
-	<SearchContextComponent {...args}>
+
+const Template: ComponentStory<typeof ColumnSortComponent> = (args) => (
+	<ColumnSortComponent {...args}>
 		<ObjectsList />
-	</SearchContextComponent>
+	</ColumnSortComponent>
 );
 
-export const ListWithFilteredItems = Template.bind({});
-ListWithFilteredItems.args = {
-	items: [{ name: 'Winona' }, { name: 'David' }, { name: 'Millie' }],
+export const ListWithSortedItems = Template.bind({});
+ListWithSortedItems.args = {
+	items: [{ name: 'Winona', age: 43 }, { name: 'David', age: 42 }, { name: 'Millie', age: 14 }],
+	defaultOrder: { column: 'name', order: SortOrder.Ascending },
 };
