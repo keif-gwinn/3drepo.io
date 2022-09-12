@@ -53,7 +53,7 @@ export const DashboardListHeaderLabel = ({
 					<Label>
 						{children}
 					</Label>
-					{sortingDirection && (
+					{sortingDirection !== null && (
 						<Indicator sortingDirection={sortingDirection}>
 							<ArrowIcon />
 						</Indicator>
