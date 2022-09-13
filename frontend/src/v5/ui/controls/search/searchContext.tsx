@@ -29,14 +29,15 @@ const defaultValue: SearchContextType<any> = { items: [], filteredItems: [], que
 export const SearchContext = createContext(defaultValue);
 SearchContext.displayName = 'SearchContext';
 
-export interface Props {
+export interface SearchContextComponentProps {
 	items: any[];
 	children: any;
 	fieldsToFilter?: string[];
 	filteringFunction?: <T>(items: T[], query: string) => T[];
 }
 
-export const SearchContextComponent = ({ items, children, fieldsToFilter, filteringFunction }: Props) => {
+// eslint-disable-next-line max-len
+export const SearchContextComponent = ({ items, children, fieldsToFilter, filteringFunction }: SearchContextComponentProps) => {
 	const [query, setQuery] = useState('');
 	const [contextValue, setContextValue] = useState({ items, filteredItems: items, query, setQuery });
 

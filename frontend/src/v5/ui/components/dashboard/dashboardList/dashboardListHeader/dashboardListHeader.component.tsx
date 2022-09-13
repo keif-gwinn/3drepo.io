@@ -14,58 +14,18 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-import { Dispatch, useState, cloneElement } from 'react';
-import { SortingDirection } from '../dashboardList.types';
-import { ISortConfig } from '../useOrderedList';
 import { DashboardListHeaderContainer } from './dashboardListHeader.styles';
 
-type IDashboardListHeader = {
+type IDashboardListHeaderProps = {
 	className?: string;
-	onSortingChange: Dispatch<ISortConfig>;
 	children: JSX.Element[];
-	defaultSortConfig?: ISortConfig;
 };
 
 export const DashboardListHeader = ({
 	className,
-	onSortingChange,
 	children,
-	defaultSortConfig,
-}: IDashboardListHeader): JSX.Element => {
-	const [sort, setSort] = useState(defaultSortConfig);
-
-	const registerSort = (colName) => {
-		if (!colName) {
-			return {};
-		}
-
-		const onClick = () => {
-			let { direction: directionState } = sort;
-			if (colName === sort.column) {
-				directionState = directionState === SortingDirection.ASCENDING
-					? SortingDirection.DESCENDING : SortingDirection.ASCENDING;
-			} else {
-				directionState = SortingDirection.DESCENDING;
-			}
-			setSort({ column: colName, direction: directionState });
-			onSortingChange({ column: colName, direction: directionState });
-		};
-
-		const sortingDirection = (colName === sort?.column ? sort.direction : undefined);
-
-		return { sortingDirection, onClick, sort: true };
-	};
-
-	return (
-		<DashboardListHeaderContainer className={className}>
-			{children.map((child) => (
-				cloneElement(child, {
-					key: child.props.name,
-					...registerSort(child.props.name),
-					...child.props,
-				})
-			))}
-		</DashboardListHeaderContainer>
-	);
-};
+}: IDashboardListHeaderProps): JSX.Element => (
+	<DashboardListHeaderContainer className={className}>
+		{children}
+	</DashboardListHeaderContainer>
+);

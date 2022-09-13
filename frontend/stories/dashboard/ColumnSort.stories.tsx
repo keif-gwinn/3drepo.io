@@ -19,18 +19,18 @@ import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { DashboardListCollapse, DashboardListEmptyContainer, DashboardListEmptySearchResults, DashboardListHeader, DashboardListHeaderLabel, DashboardListItem } from '@components/dashboard/dashboardList';
 import { DashboardListItemRow, DashboardListItemText } from '@components/dashboard/dashboardList/dashboardListItem/components';
 import { useContext } from 'react';
-import { ColumnSortComponent, SortContext, SortOrder } from '@controls/columnSort/columnSort.component';
+import { SortContextComponent, SortContext, SortOrder } from '@controls/columnSort/columnSort';
 
 export default {
 	title: 'Dashboard/ColumnSortContext',
-	component: ColumnSortComponent,
+	component: SortContextComponent,
 	argTypes: {
 		items: { control: 'object' },
 	},
-} as ComponentMeta<typeof ColumnSortComponent>;
+} as ComponentMeta<typeof SortContextComponent>;
 
-const ObjectsListHeader = ({ columnNames, setSortConfig }) => (
-	<DashboardListHeader onSortingChange={setSortConfig}>
+const ObjectsListHeader = ({ columnNames }) => (
+	<DashboardListHeader>
 		{(columnNames as string[]).map((columnName) => (
 			<DashboardListHeaderLabel name={columnName}>{columnName}</DashboardListHeaderLabel>
 		))}
@@ -47,7 +47,7 @@ const ObjectsList = () => {
 			{items.length > 0
 			&& (
 				<>
-					<ObjectsListHeader setSortConfig={() => { }} columnNames={Object.keys(items[0])} />
+					<ObjectsListHeader columnNames={Object.keys(items[0])} />
 					{
 						sortedItems.map((item) => (
 							<DashboardListItem key={JSON.stringify(item)}>
@@ -75,10 +75,10 @@ const ObjectsList = () => {
 	);
 };
 
-const Template: ComponentStory<typeof ColumnSortComponent> = (args) => (
-	<ColumnSortComponent {...args}>
+const Template: ComponentStory<typeof SortContextComponent> = (args) => (
+	<SortContextComponent {...args}>
 		<ObjectsList />
-	</ColumnSortComponent>
+	</SortContextComponent>
 );
 
 export const ListWithSortedItems = Template.bind({});

@@ -20,7 +20,7 @@ import { Button as ButtonComponent } from '@controls/button';
 import { FixedOrGrowContainer } from '@controls/fixedOrGrowContainer';
 import { Typography } from '@controls/typography';
 import { Display } from '@/v5/ui/themes/media';
-import { SortOrder } from '@controls/columnSort/columnSort.component';
+import { SortOrder } from '@controls/columnSort/columnSort';
 
 export const Container = styled(FixedOrGrowContainer)<{ hideWhenSmallerThan?: Display; hidden: boolean; }>`
 	align-items: center;

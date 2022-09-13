@@ -39,7 +39,7 @@ const defaultValue: SortingType<any> = { items: [], sortedItems: [], sortOrder: 
 export const SortContext = createContext(defaultValue);
 SortContext.displayName = 'SortingContext';
 
-export interface Props {
+export interface ColumnSortComponentProps {
 	items: any[];
 	children: any;
 	defaultSort: ColumnSortOrder | null;
@@ -64,7 +64,7 @@ const sortingFunction = (column) => (a, b): number => {
 	return 0;
 };
 
-export const ColumnSortComponent = ({ items, children, defaultSort }:Props) => {
+export const SortContextComponent = ({ items, children, defaultSort }: ColumnSortComponentProps) => {
 	const [sortOrder, setSortOrder] = useState(defaultSort);
 
 	const sortBy = (column: string) => {
