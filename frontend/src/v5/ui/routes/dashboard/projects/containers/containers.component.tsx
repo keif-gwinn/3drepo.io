@@ -25,14 +25,19 @@ import { Button } from '@controls/button';
 import { CreateContainerForm } from '@/v5/ui/routes/dashboard/projects/containers/createContainerForm/createContainerForm.component';
 import { FormattedMessage } from 'react-intl';
 import { enableRealtimeNewContainer } from '@/v5/services/realtime/container.events';
-import { SearchContextComponent } from '@controls/search/searchContext';
 import { CONTAINERS_SEARCH_FIELDS } from '@/v5/store/containers/containers.helpers';
+import { DashboardListContextComponent, DEFAULT_SORT_CONFIG } from '@components/dashboard/dashboardList/dashboardListContext.component';
 import { ContainersList } from './containersList';
 import { SkeletonListItem } from './containersList/skeletonListItem';
 import { useContainersData } from './containers.hooks';
 import { DashboardParams } from '../../../routes.constants';
 
 export const IsMainList = createContext(false);
+
+const ContainersContextProps = {
+	fieldsToFilter: CONTAINERS_SEARCH_FIELDS,
+	defaultSort: DEFAULT_SORT_CONFIG,
+};
 
 export const Containers = (): JSX.Element => {
 	const { teamspace, project } = useParams<DashboardParams>();
@@ -52,7 +57,7 @@ export const Containers = (): JSX.Element => {
 
 	return (
 		<>
-			<SearchContextComponent items={favouriteContainers} fieldsToFilter={CONTAINERS_SEARCH_FIELDS}>
+			<DashboardListContextComponent items={favouriteContainers} {...ContainersContextProps}>
 				<ContainersList
 					title={(
 						<FormattedMessage
@@ -74,10 +79,10 @@ export const Containers = (): JSX.Element => {
 						</DashboardListEmptyText>
 					)}
 				/>
-			</SearchContextComponent>
+			</DashboardListContextComponent>
 			<Divider />
 			<IsMainList.Provider value>
-				<SearchContextComponent items={containers} fieldsToFilter={CONTAINERS_SEARCH_FIELDS}>
+				<DashboardListContextComponent items={containers} {...ContainersContextProps}>
 					<ContainersList
 						title={(
 							<FormattedMessage
@@ -107,7 +112,7 @@ export const Containers = (): JSX.Element => {
 							</>
 						)}
 					/>
-				</SearchContextComponent>
+				</DashboardListContextComponent>
 			</IsMainList.Provider>
 			<CreateContainerForm
 				open={createContainerOpen}

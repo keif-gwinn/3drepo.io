@@ -15,19 +15,40 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { SortContextComponent, ColumnSortComponentProps } from '@controls/columnSort/columnSort';
+import { SortContextComponent, ColumnSortComponentProps, SortContext, SortOrder } from '@controls/columnSort/sortContext';
 import { SearchContext, SearchContextComponent, SearchContextComponentProps } from '@controls/search/searchContext';
+import { createContext } from 'react';
+
+export interface DashboardListContextType<T> {
+	items:T[],
+	processedItems: T[]
+}
+
+export const DEFAULT_SORT_CONFIG = {
+	column: 'name',
+	order: SortOrder.Descending,
+};
+
+const defaultValue: DashboardListContextType<any> = { items: [], processedItems: [] };
+export const DashboardListContext = createContext(defaultValue);
+DashboardListContext.displayName = 'DashboardListContext';
 
 type DashboardListContextComponentProps = SearchContextComponentProps & ColumnSortComponentProps;
 
-export const DashboardListContextComponent = ({ children, items, defaultSort }: DashboardListContextComponentProps) => {
+export const DashboardListContextComponent = ({ children, items, defaultSort }: DashboardListContextComponentProps) => (
 	<SearchContextComponent items={items}>
 		<SearchContext.Consumer>
 			{({ filteredItems }) => (
 				<SortContextComponent items={filteredItems} defaultSort={defaultSort}>
-					{children}
+					<SortContext.Consumer>
+						{({ sortedItems }) => (
+							<DashboardListContext.Provider value={{ items, processedItems: sortedItems }}>
+								{children}
+							</DashboardListContext.Provider>
+						)}
+					</SortContext.Consumer>
 				</SortContextComponent>
 			)}
 		</SearchContext.Consumer>
-	</SearchContextComponent>;
-};
+	</SearchContextComponent>
+);

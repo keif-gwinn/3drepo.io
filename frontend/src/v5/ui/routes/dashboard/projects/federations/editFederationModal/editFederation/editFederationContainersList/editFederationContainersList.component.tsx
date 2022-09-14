@@ -27,7 +27,6 @@ import { formatMessage } from '@/v5/services/intl';
 import { FormattedMessage } from 'react-intl';
 import { SearchInput } from '@controls/search/searchInput';
 import { Display } from '@/v5/ui/themes/media';
-import { DEFAULT_SORT_CONFIG, useOrderedList } from '@components/dashboard/dashboardList/useOrderedList';
 import { IContainer } from '@/v5/store/containers/containers.types';
 import { ButtonProps } from '@mui/material/Button';
 import { SkeletonListItem } from '@components/shared/revisionDetails/components/skeletonListItem';
@@ -35,6 +34,7 @@ import { isEmpty } from 'lodash';
 import { ContainersHooksSelectors } from '@/v5/services/selectorsHooks/containersSelectors.hooks';
 import { CollapseSideElementGroup } from '@/v5/ui/routes/dashboard/projects/containers/containersList/containersList.styles';
 import { SearchContext, SearchContextType } from '@controls/search/searchContext';
+import { DashboardListContext, DashboardListContextType } from '@components/dashboard/dashboardList/dashboardListContext.component';
 import { EditFederationContainersListItem, IconButtonProps } from './editFederationContainersListItem/editFederationContainersListItem.component';
 import { Container, ContainerListMainTitle, ContainerCount } from './editFederationContainersList.styles';
 
@@ -68,13 +68,10 @@ export const EditFederationContainers = ({
 	iconButton: IconButton,
 }: EditFederationContainersProps) => {
 	const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-	const { items: containers, filteredItems, query } = useContext<SearchContextType<IContainer>>(SearchContext);
-	const hasContainers = containers.length > 0;
+	const { query } = useContext<SearchContextType<IContainer>>(SearchContext);
+	const { items: containers, processedItems: processedContainers } = useContext<DashboardListContextType<IContainer>>(DashboardListContext);
 
-	const { sortedList, setSortConfig } = useOrderedList(
-		filteredItems,
-		DEFAULT_SORT_CONFIG,
-	);
+	const hasContainers = containers.length > 0;
 
 	const isListPending = ContainersHooksSelectors.selectIsListPending();
 	const areStatsPending = ContainersHooksSelectors.selectAreStatsPending();
@@ -89,14 +86,14 @@ export const EditFederationContainers = ({
 				title={(
 					<>
 						<ContainerListMainTitle>{title}</ContainerListMainTitle>
-						{!isListPending && <ContainerCount>({sortedList.length})</ContainerCount>}
+						{!isListPending && <ContainerCount>({processedContainers.length})</ContainerCount>}
 					</>
 				)}
 				isLoading={areStatsPending}
 				tooltipTitles={collapsableTooltips}
 				sideElement={(
 					<CollapseSideElementGroup>
-						<ActionButton disabled={isEmpty(containers)} filteredContainers={sortedList}>
+						<ActionButton disabled={isEmpty(containers)} filteredContainers={processedContainers}>
 							{isEmpty(query)
 								? actionButtonTexts.allResults
 								: actionButtonTexts.filteredResults}
@@ -107,7 +104,7 @@ export const EditFederationContainers = ({
 					</CollapseSideElementGroup>
 				)}
 			>
-				<DashboardListHeader onSortingChange={setSortConfig} defaultSortConfig={DEFAULT_SORT_CONFIG}>
+				<DashboardListHeader>
 					<DashboardListHeaderLabel name="name" minWidth={116}>
 						<FormattedMessage id="modal.editFederation.list.header.container" defaultMessage="Container" />
 					</DashboardListHeaderLabel>
@@ -125,8 +122,8 @@ export const EditFederationContainers = ({
 					</DashboardListHeaderLabel>
 				</DashboardListHeader>
 				<DashboardList>
-					{!isEmpty(sortedList) ? (
-						sortedList.map((container, index) => (container.hasStatsPending ? (
+					{!isEmpty(processedContainers) ? (
+						processedContainers.map((container, index) => (container.hasStatsPending ? (
 							<SkeletonListItem delay={index / 10} key={container._id} />
 						) : (
 							<EditFederationContainersListItem

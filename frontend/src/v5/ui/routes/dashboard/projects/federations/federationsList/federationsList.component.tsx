@@ -32,13 +32,12 @@ import { SearchInput } from '@controls/search/searchInput';
 import AddCircleIcon from '@assets/icons/add_circle.svg';
 import { FederationListItem } from '@/v5/ui/routes/dashboard/projects/federations/federationsList/federationListItem';
 import { FederationsHooksSelectors } from '@/v5/services/selectorsHooks/federationsSelectors.hooks';
-import { DEFAULT_SORT_CONFIG, useOrderedList } from '@components/dashboard/dashboardList/useOrderedList';
 import { Button } from '@controls/button';
 import { DashboardListButton } from '@components/dashboard/dashboardList/dashboardList.styles';
 import { formatMessage } from '@/v5/services/intl';
 import { SkeletonListItem } from '@/v5/ui/routes/dashboard/projects/federations/federationsList/skeletonListItem';
 import { Display } from '@/v5/ui/themes/media';
-import { SearchContextType, SearchContext } from '@controls/search/searchContext';
+import { DashboardListContext, DashboardListContextType } from '@components/dashboard/dashboardList/dashboardListContext.component';
 import { CollapseSideElementGroup, Container } from './federationsList.styles';
 
 type IFederationsList = {
@@ -59,11 +58,8 @@ export const FederationsList = ({
 	onClickCreate,
 	showBottomButton = false,
 }: IFederationsList): JSX.Element => {
-	// eslint-disable-next-line max-len
-	const { items: federations, filteredItems: filteredFederations } = useContext<SearchContextType<IFederation>>(SearchContext);
+	const { items: federations, processedItems: processedFederations } = useContext<DashboardListContextType<IFederation>>(DashboardListContext);
 	const hasFederations = federations.length > 0;
-
-	const { sortedList, setSortConfig } = useOrderedList(filteredFederations, DEFAULT_SORT_CONFIG);
 
 	const isListPending = FederationsHooksSelectors.selectIsListPending();
 	const areStatsPending = FederationsHooksSelectors.selectAreStatsPending();
@@ -92,7 +88,7 @@ export const FederationsList = ({
 					</CollapseSideElementGroup>
 				)}
 			>
-				<DashboardListHeader onSortingChange={setSortConfig} defaultSortConfig={DEFAULT_SORT_CONFIG}>
+				<DashboardListHeader>
 					<DashboardListHeaderLabel name="name" minWidth={90}>
 						<FormattedMessage id="federations.list.header.federation" defaultMessage="Federation" />
 					</DashboardListHeaderLabel>
@@ -113,8 +109,8 @@ export const FederationsList = ({
 					</DashboardListHeaderLabel>
 				</DashboardListHeader>
 				<DashboardList>
-					{!isEmpty(sortedList) ? (
-						sortedList.map((federation, index) => (federation.hasStatsPending ? (
+					{!isEmpty(processedFederations) ? (
+						processedFederations.map((federation, index) => (federation.hasStatsPending ? (
 							<SkeletonListItem delay={index / 10} key={federation._id} />
 						) : (
 							<FederationListItem

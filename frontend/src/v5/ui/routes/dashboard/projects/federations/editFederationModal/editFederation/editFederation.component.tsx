@@ -20,8 +20,8 @@ import { CONTAINERS_SEARCH_FIELDS } from '@/v5/store/containers/containers.helpe
 import { IContainer } from '@/v5/store/containers/containers.types';
 import { IFederation } from '@/v5/store/federations/federations.types';
 import { DashboardListEmptyText, Divider } from '@components/dashboard/dashboardList/dashboardList.styles';
+import { DashboardListContextComponent, DEFAULT_SORT_CONFIG } from '@components/dashboard/dashboardList/dashboardListContext.component';
 import { Button } from '@controls/button';
-import { SearchContextComponent } from '@controls/search/searchContext';
 import { Tooltip } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import { FormattedMessage } from 'react-intl';
@@ -33,6 +33,11 @@ import { IconButtonProps } from './editFederationContainersList/editFederationCo
 type EditFederationProps = {
 	federation: IFederation;
 	onContainersChange: (includedContainers) => void;
+};
+
+const ContainersContextProps = {
+	fieldsToFilter: CONTAINERS_SEARCH_FIELDS,
+	defaultSort: DEFAULT_SORT_CONFIG,
 };
 
 export const EditFederation = ({ federation, onContainersChange }: EditFederationProps): JSX.Element => {
@@ -68,7 +73,7 @@ export const EditFederation = ({ federation, onContainersChange }: EditFederatio
 
 	return (
 		<>
-			<SearchContextComponent items={includedContainers} fieldsToFilter={CONTAINERS_SEARCH_FIELDS}>
+			<DashboardListContextComponent items={includedContainers} {...ContainersContextProps}>
 				<EditFederationContainers
 					title={
 						formatMessage({
@@ -118,9 +123,9 @@ export const EditFederation = ({ federation, onContainersChange }: EditFederatio
 						</Tooltip>
 					), [])}
 				/>
-			</SearchContextComponent>
+			</DashboardListContextComponent>
 			<Divider />
-			<SearchContextComponent items={availableContainers} fieldsToFilter={CONTAINERS_SEARCH_FIELDS}>
+			<DashboardListContextComponent items={availableContainers} {...ContainersContextProps}>
 				<EditFederationContainers
 					title={
 						formatMessage({
@@ -171,7 +176,7 @@ export const EditFederation = ({ federation, onContainersChange }: EditFederatio
 						</Tooltip>
 					), [])}
 				/>
-			</SearchContextComponent>
+			</DashboardListContextComponent>
 		</>
 	);
 };

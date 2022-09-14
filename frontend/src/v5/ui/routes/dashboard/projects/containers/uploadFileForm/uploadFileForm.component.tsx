@@ -108,7 +108,7 @@ export const UploadFileForm = ({
 		getValues,
 		setValue,
 		watch,
-	} = methods;
+} = methods;
 	const { fields, append, remove } = useFieldArray({
 		control,
 		name: 'uploads',
@@ -122,9 +122,8 @@ export const UploadFileForm = ({
 
 	const DEFAULT_SORT_CONFIG = {
 		column: 'file',
-		direction: SortingDirection.ASCENDING,
+		direction: SortOrder.Ascending,
 	};
-	const { sortedList, setSortConfig }: any = useOrderedList(fields || [], DEFAULT_SORT_CONFIG);
 
 	const revTagMaxValue = useMemo(() => {
 		const schemaDescription = Yup.reach(UploadsSchema, 'uploads.revisionTag').describe();
@@ -214,10 +213,7 @@ export const UploadFileForm = ({
 						<Padding>
 							{!!fields.length && (
 								<>
-									<UploadsListHeader
-										onSortingChange={setSortConfig}
-										defaultSortConfig={DEFAULT_SORT_CONFIG}
-									>
+									<UploadsListHeader>
 										<DashboardListHeaderLabel key="file" name="file.name" minWidth={122}>
 											<FormattedMessage id="uploads.list.header.filename" defaultMessage="Filename" />
 										</DashboardListHeaderLabel>
@@ -288,3 +284,4 @@ export const UploadFileForm = ({
 		</FormProvider>
 	);
 };
+*/

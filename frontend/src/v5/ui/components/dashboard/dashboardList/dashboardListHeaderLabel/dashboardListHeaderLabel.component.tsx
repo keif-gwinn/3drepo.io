@@ -18,7 +18,7 @@
 import { Dispatch, ReactNode, useContext } from 'react';
 import ArrowIcon from '@assets/icons/arrow.svg';
 import { FixedOrGrowContainerProps } from '@controls/fixedOrGrowContainer';
-import { SortContext } from '@controls/columnSort/columnSort';
+import { SortContext } from '@controls/columnSort/sortContext';
 import { Container, Button, Indicator, Label } from './dashboardListHeaderLabel.styles';
 
 interface IDashboardListHeaderLabel extends FixedOrGrowContainerProps{

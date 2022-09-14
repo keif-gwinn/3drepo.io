@@ -33,12 +33,11 @@ import { SearchInput } from '@controls/search/searchInput';
 import { Button } from '@controls/button';
 import { ContainersHooksSelectors } from '@/v5/services/selectorsHooks/containersSelectors.hooks';
 import { DialogsActionsDispatchers } from '@/v5/services/actionsDispatchers/dialogsActions.dispatchers';
-import { DEFAULT_SORT_CONFIG, useOrderedList } from '@components/dashboard/dashboardList/useOrderedList';
 import { ContainerListItem } from '@/v5/ui/routes/dashboard/projects/containers/containersList/containerListItem';
 import { Display } from '@/v5/ui/themes/media';
 import { formatMessage } from '@/v5/services/intl';
 import { DashboardListButton } from '@components/dashboard/dashboardList/dashboardList.styles';
-import { SearchContext, SearchContextType } from '@controls/search/searchContext';
+import { DashboardListContextType, DashboardListContext } from '@components/dashboard/dashboardList/dashboardListContext.component';
 import { Container, CollapseSideElementGroup } from './containersList.styles';
 import { UploadFileForm } from '../uploadFileForm/uploadFileForm.component';
 import { SkeletonListItem } from './skeletonListItem';
@@ -62,11 +61,8 @@ export const ContainersList = ({
 	showBottomButton = false,
 }: IContainersList): JSX.Element => {
 	const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-	// eslint-disable-next-line max-len
-	const { items: containers, filteredItems: filteredContainers } = useContext<SearchContextType<IContainer>>(SearchContext);
+	const { items: containers, processedItems: processedContainers } = useContext<DashboardListContextType<IContainer>>(DashboardListContext);
 	const hasContainers = containers.length > 0;
-
-	const { sortedList, setSortConfig } = useOrderedList(filteredContainers, DEFAULT_SORT_CONFIG);
 
 	const isListPending = ContainersHooksSelectors.selectIsListPending();
 	const areStatsPending = ContainersHooksSelectors.selectAreStatsPending();
@@ -74,6 +70,9 @@ export const ContainersList = ({
 	const selectOrToggleItem = useCallback((id: string) => {
 		setSelectedItemId((state) => (state === id ? null : id));
 	}, []);
+
+	// console.log(JSON.stringify(processedContainers, null, '\t'));
+	console.log(JSON.stringify(containers, null, '\t'));
 
 	return (
 		<Container>
@@ -105,7 +104,7 @@ export const ContainersList = ({
 					</CollapseSideElementGroup>
 				)}
 			>
-				<DashboardListHeader onSortingChange={setSortConfig} defaultSortConfig={DEFAULT_SORT_CONFIG}>
+				<DashboardListHeader>
 					<DashboardListHeaderLabel name="name" minWidth={90}>
 						<FormattedMessage id="containers.list.header.container" defaultMessage="Container" />
 					</DashboardListHeaderLabel>
@@ -123,8 +122,8 @@ export const ContainersList = ({
 					</DashboardListHeaderLabel>
 				</DashboardListHeader>
 				<DashboardList>
-					{!isEmpty(sortedList) ? (
-						sortedList.map((container, index) => (container.hasStatsPending ? (
+					{!isEmpty(processedContainers) ? (
+						processedContainers.map((container, index) => (container.hasStatsPending ? (
 							<SkeletonListItem delay={index / 10} key={container._id} />
 						) : (
 							<ContainerListItem

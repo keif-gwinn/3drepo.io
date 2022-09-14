@@ -19,7 +19,7 @@ import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { DashboardListCollapse, DashboardListEmptyContainer, DashboardListEmptySearchResults, DashboardListHeader, DashboardListHeaderLabel, DashboardListItem } from '@components/dashboard/dashboardList';
 import { DashboardListItemRow, DashboardListItemText } from '@components/dashboard/dashboardList/dashboardListItem/components';
 import { useContext } from 'react';
-import { SortContextComponent, SortContext, SortOrder } from '@controls/columnSort/columnSort';
+import { SortContextComponent, SortContext, SortOrder } from '@controls/columnSort/sortContext';
 
 export default {
 	title: 'Dashboard/ColumnSortContext',

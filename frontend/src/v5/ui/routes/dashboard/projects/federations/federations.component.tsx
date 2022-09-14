@@ -27,13 +27,18 @@ import {
 import { DashboardSkeletonList } from '@components/dashboard/dashboardList/dashboardSkeletonList';
 import { Button } from '@controls/button';
 import { enableRealtimeNewFederation } from '@/v5/services/realtime/federation.events';
-import { SearchContextComponent } from '@controls/search/searchContext';
 import { FEDERATION_SEARCH_FIELDS } from '@/v5/store/federations/federations.helpers';
+import { DashboardListContextComponent, DEFAULT_SORT_CONFIG } from '@components/dashboard/dashboardList/dashboardListContext.component';
 import { FederationsList } from './federationsList';
 import { SkeletonListItem } from './federationsList/skeletonListItem';
 import { CreateFederationForm } from './createFederationForm';
 import { useFederationsData } from './federations.hooks';
 import { DashboardParams } from '../../../routes.constants';
+
+const FederationContextProps = {
+	fieldsToFilter: FEDERATION_SEARCH_FIELDS,
+	defaultSort: DEFAULT_SORT_CONFIG,
+};
 
 export const Federations = (): JSX.Element => {
 	const {
@@ -53,7 +58,7 @@ export const Federations = (): JSX.Element => {
 
 	return (
 		<>
-			<SearchContextComponent items={favouriteFederations} fieldsToFilter={FEDERATION_SEARCH_FIELDS}>
+			<DashboardListContextComponent items={favouriteFederations} {...FederationContextProps}>
 				<FederationsList
 					onClickCreate={() => setCreateFedOpen(true)}
 					title={(
@@ -75,9 +80,9 @@ export const Federations = (): JSX.Element => {
 						</DashboardListEmptyText>
 					)}
 				/>
-			</SearchContextComponent>
+			</DashboardListContextComponent>
 			<Divider />
-			<SearchContextComponent items={federations} fieldsToFilter={FEDERATION_SEARCH_FIELDS}>
+			<DashboardListContextComponent items={federations} {...FederationContextProps}>
 				<FederationsList
 					onClickCreate={() => setCreateFedOpen(true)}
 					title={(
@@ -107,7 +112,7 @@ export const Federations = (): JSX.Element => {
 						</>
 					)}
 				/>
-			</SearchContextComponent>
+			</DashboardListContextComponent>
 			<CreateFederationForm
 				open={createFedOpen}
 				onClickClose={() => setCreateFedOpen(false)}
