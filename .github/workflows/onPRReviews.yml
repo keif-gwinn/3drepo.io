@@ -68,10 +68,10 @@ jobs:
           files: .azure/build-and-deploy.yml
           branch: ${{ github.head_ref || github.ref_name }}
       - name: Get an entry with a variable that might contain dots or spaces
-        id: is.customHelmOverride
+        id: customHelmOverride
         uses: mikefarah/yq@master
         with:
-          cmd: if ( $(yq eval '.variables.customHelmOverride | contains("rabbitmq")' .azure/build-and-deploy.yaml) === "true" ); then echo $(yq eval '.variables.customHelmOverride' .azure/build-and-deploy.yaml); exit 1;  fi
+          cmd: if ( $(yq eval '.variables.customHelmOverride | ( contains("rabbitmq") or contains("APP_WEB_CUSTOMLOGINS") )' .azure/build-and-deploy.yaml) === "true" ); then echo $(yq eval '.variables.customHelmOverride' .azure/build-and-deploy.yaml); exit 1;  fi
 
     # - language: node_js
     #   dist: focal
