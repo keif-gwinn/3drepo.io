@@ -65,7 +65,7 @@ jobs:
       - name: Checkout files
         uses: Bhacaz/checkout-files@v2
         with:
-          files: .azure/build-and-deploy.yml
+          files: .azure/build-and-deploy.yaml
           branch: ${{ github.head_ref || github.ref_name }}
       - name: Get an entry with a variable that might contain dots or spaces
         id: customHelmOverride
