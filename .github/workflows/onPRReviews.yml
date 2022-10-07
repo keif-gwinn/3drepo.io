@@ -71,7 +71,7 @@ jobs:
         id: customHelmOverride
         uses: mikefarah/yq@master
         with:
-          cmd: if ( $(yq eval '.variables.customHelmOverride | ( contains("rabbitmq") or contains("APP_WEB_CUSTOMLOGINS") )' .azure/build-and-deploy.yaml) === "true" ); then echo $(yq eval '.variables.customHelmOverride' .azure/build-and-deploy.yaml); exit 1;  fi
+          cmd: if ( $(yq eval '.variables.customHelmOverride | ( contains("APP_") )' .azure/build-and-deploy.yaml) === "true" ); then echo $(yq eval '.variables.customHelmOverride' .azure/build-and-deploy.yaml); exit 1;  fi
 
     # - language: node_js
     #   dist: focal
