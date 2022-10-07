@@ -40,15 +40,17 @@ jobs:
   calculateStatusMessage:
     name: Work out if Awaiting Approval
     if: ${{ github.event.issue.pull_request }}
-    run: | 
-      case $ACTION in
-        review_requested ) 
-          echo "::set-output name=status::Awaiting Approval"
-        opened ) 
-          echo "::set-output name=status::In Progress"
-        ready_for_review ) 
-          echo "::set-output name=status::Awaiting Approval"
-      esac
+    steps:
+      - name: Set status message from input    
+        run: | 
+          case $ACTION in
+            review_requested ) 
+              echo "::set-output name=status::Awaiting Approval"
+            opened ) 
+              echo "::set-output name=status::In Progress"
+            ready_for_review ) 
+              echo "::set-output name=status::Awaiting Approval"
+          esac
     env:
       ACTION:  ${{ github.event.action }}
 
