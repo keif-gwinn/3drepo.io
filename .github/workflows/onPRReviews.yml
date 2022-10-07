@@ -54,5 +54,5 @@ jobs:
           project_number: 1
           content_id: ${{ github.event.client_payload.command.resource.id }}
           field: Status
-          value: 'awaiting approval' #${{ github.event.client_payload.data.status }}
+          value: 'Awaiting Approval' #${{ github.event.client_payload.data.status }}
 
