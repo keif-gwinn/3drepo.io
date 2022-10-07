@@ -55,3 +55,34 @@ jobs:
           field: Status
           value: 'Awaiting Approval' #${{ github.event.client_payload.data.status }}
 
+
+# make sure we're not merging DevOps changes
+  devOpsSanityCheck:
+    name: Ensure that custom settings are not being merged
+    runs-on: ubuntu-latest
+    needs: extractIssueNumber
+    steps:
+      - name: Checkout files
+        uses: Bhacaz/checkout-files@v2
+        with:
+          files: .azure/build-and-deploy.yml
+          branch: ${{ github.head_ref || github.ref_name }}
+      - name: Get an entry with a variable that might contain dots or spaces
+        id: is.customHelmOverride
+        uses: mikefarah/yq@master
+        with:
+          cmd: if ( $(yq eval '.variables.customHelmOverride | contains("rabbitmq")' .azure/build-and-deploy.yaml) === "true" ); then echo $(yq eval '.variables.customHelmOverride' .azure/build-and-deploy.yaml); exit 1;  fi
+
+    # - language: node_js
+    #   dist: focal
+    #   name: DevOps Sanity Check
+    #   addons:
+    #   git:
+    #   submodules: false
+    #   depth: 1
+    #   node_js:
+    #     - "14.17.1"
+    #   before_install:
+    #     - sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.17.2/yq_linux_amd64 ; sudo chmod +x /usr/local/bin/yq
+    #   script:
+    #     - if ( $(yq eval '.variables.customHelmOverride | contains("rabbitmq")' .azure/build-and-deploy.yaml) === "true" ); then echo $(yq eval '.variables.customHelmOverride' .azure/build-and-deploy.yaml); travis_terminate 1;  fi
