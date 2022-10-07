@@ -60,18 +60,19 @@ jobs:
   devOpsSanityCheck:
     name: Ensure that custom settings are not being merged
     runs-on: ubuntu-latest
-    needs: extractIssueNumber
     steps:
-      - name: Checkout files
+      - name: Checkout .azure/build-and-deploy.yaml
         uses: Bhacaz/checkout-files@v2
         with:
           files: .azure/build-and-deploy.yaml
           branch: ${{ github.head_ref || github.ref_name }}
+      - name: Echo current filesystem to ensure file is present
+        run: find .
       - name: Check to see if customHelmOverride has any APP settings
         id: customHelmOverride
         uses: mikefarah/yq@master
         with:
-          cmd: find . ; if ( $(yq eval '.variables.customHelmOverride | ( contains("APP_") )' .azure/build-and-deploy.yaml) === "true" ); then echo $(yq eval '.variables.customHelmOverride' .azure/build-and-deploy.yaml); exit 1;  fi
+          cmd: if ( $(yq eval '.variables.customHelmOverride | ( contains("APP_") )' .azure/build-and-deploy.yaml) === "true" ); then echo $(yq eval '.variables.customHelmOverride' .azure/build-and-deploy.yaml); exit 1;  fi
 
     # - language: node_js
     #   dist: focal
