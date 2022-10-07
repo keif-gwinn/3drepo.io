@@ -16,7 +16,7 @@ jobs:
         with:
           pr: ${{ github.event.number }}
           base: staging
-          github-token: ${{ secrets.PROJ_MANAGEMENT_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
         id: commitMsgParser
 
   checkMergeReady:
@@ -33,7 +33,7 @@ jobs:
         uses: carmenfan/all-reviewers-approved@v1.0
         with:
           pr: ${{ steps.condval.outputs.value }}
-          github-token: ${{ secrets.PROJ_MANAGEMENT_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
 #  if someone has been assigned a reviewer -> change issue status to "awaiting approval"
   awaitingApproval:
