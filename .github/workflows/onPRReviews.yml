@@ -73,10 +73,10 @@ jobs:
     steps:
       - name: Get Content-ID From Issue Number
         id: getContentIdFromIssue
-        uses: keifgwinn/extract-content-id-from-issue-number@v1.0
+        uses: keifgwinn/extract-content-id-from-issue-number@v1.0.1
         with:
-          issue-number: ${{ needs.extractIssueNumber.outputs.issue-number }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ needs.extractIssueNumber.outputs.issue-number }}
 
   viewDebug:
     name: viewDebug calculateStatusMessage
