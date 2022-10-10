@@ -65,7 +65,7 @@ jobs:
       ACTION: ${{ github.event.action }}
 
   getContentID:
-    name: Get the Issue content-id
+    name: Get the content-id
     runs-on: ubuntu-latest
     needs: extractIssueNumber
     outputs: 
@@ -75,8 +75,8 @@ jobs:
         id: getContentIdFromIssue
         uses: keifgwinn/extract-content-id-from-issue-number@v1.0.2
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ needs.extractIssueNumber.outputs.issue-number }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   viewDebug:
     name: viewDebug calculateStatusMessage
