@@ -74,7 +74,7 @@ jobs:
     env:
       calculateStatusMessage: ${{ needs.calculateStatusMessage.outputs.status }}
 
-  awaitingApproval:
+  changeToAwaitingApproval:
     name: Update ticket status to Awaiting Approval
     if: needs.calculateStatusMessage.outputs.status == 'Awaiting Approval'
     runs-on: ubuntu-latest
