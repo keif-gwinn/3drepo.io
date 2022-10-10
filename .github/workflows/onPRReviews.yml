@@ -40,6 +40,7 @@ jobs:
   calculateStatusMessage:
     name: Work out if Awaiting Approval
     if: ${{ github.event.issue.pull_request }}
+    needs: extractIssueNumber
     runs-on: ubuntu-latest
     steps:
       - name: Set status message from input    
@@ -59,8 +60,8 @@ jobs:
       ACTION:  ${{ github.event.action }}
 
   awaitingApproval:
-    name: If someone has been assigned a reviewer -> change issue status to "awaiting approval"
-    if: ${{ github.event.issue.pull_request }}
+    name: Update ticket status to Awaiting Approval
+    if: needs.calculateStatusMessage.outputs.status == 'Awaiting Approval'
     runs-on: ubuntu-latest
     needs: calculateStatusMessage
     steps:
@@ -74,13 +75,13 @@ jobs:
           github_token: ${{ secrets.PROJ_MANAGEMENT_TOKEN }}
           organization: keif-gwinn
           project_number: 1
-          content_id: ${{ github.event.pull_request.self.href }}
+          content_id: ${{ needs.extractIssueNumber.outputs.issue-number }}
           field: Status
           value: ${{ needs.calculateStatusMessage.outputs.status }}
 
   changeToInProgress:
-    name: If someone has been assigned a reviewer -> change issue status to "awaiting approval"
-    if: ${{ github.event.issue.pull_request }}
+    name: Update ticket status to In Progress
+    if: needs.calculateStatusMessage.outputs.status == 'In Progress'
     runs-on: ubuntu-latest
     needs: calculateStatusMessage
     steps:
@@ -94,7 +95,7 @@ jobs:
           github_token: ${{ secrets.PROJ_MANAGEMENT_TOKEN }}
           organization: keif-gwinn
           project_number: 1
-          content_id: ${{ github.event.pull_request.self.href }}
+          content_id: ${{ needs.extractIssueNumber.outputs.issue-number }}
           field: Status
           value: ${{ needs.calculateStatusMessage.outputs.status }}
 
