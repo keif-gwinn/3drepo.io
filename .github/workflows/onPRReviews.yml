@@ -73,7 +73,7 @@ jobs:
     steps:
       - name: Get Content-ID From Issue Number
         id: getContentIdFromIssue
-        uses: keifgwinn/extract-content-id-from-issue-number@v1.0.1
+        uses: keifgwinn/extract-content-id-from-issue-number@v1.0.2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ needs.extractIssueNumber.outputs.issue-number }}
