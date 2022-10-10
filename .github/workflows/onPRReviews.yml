@@ -46,11 +46,14 @@ jobs:
         run: | 
           case $ACTION in
             review_requested ) 
-              echo "::set-output name=status::Awaiting Approval"
+              echo "::set-output name=status::Awaiting Approval" 
+              ;;
             opened ) 
-              echo "::set-output name=status::In Progress"
+              echo "::set-output name=status::In Progress" 
+              ;;
             ready_for_review ) 
-              echo "::set-output name=status::Awaiting Approval"
+              echo "::set-output name=status::Awaiting Approval" 
+              ;;
           esac
     env:
       ACTION:  ${{ github.event.action }}
