@@ -90,7 +90,7 @@ jobs:
           github_token: ${{ secrets.PROJ_MANAGEMENT_TOKEN }}
           organization: keif-gwinn
           project_number: 1
-          content_id: ${{ github.event.pull_request.node_id }}
+          content_id: ${{ needs.extractIssueNumber.outputs.issue-number }}
           field: Status
           value: ${{ needs.calculateStatusMessage.outputs.status }}
     env:
@@ -112,7 +112,7 @@ jobs:
           github_token: ${{ secrets.PROJ_MANAGEMENT_TOKEN }}
           organization: keif-gwinn
           project_number: 1
-          content_id: ${{ github.event.pull_request.node_id }}
+          content_id: ${{ needs.extractIssueNumber.outputs.issue-number }}
           field: Status
           value: ${{ needs.calculateStatusMessage.outputs.status }}
 
