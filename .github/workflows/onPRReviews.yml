@@ -75,8 +75,8 @@ jobs:
         id: getContentIdFromIssue
         uses: keifgwinn/extract-content-id-from-issue-number@v1.0.4
         with:
-          issue-number: "${{ needs.extractIssueNumber.outputs.issue-number }}"
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
+          issue-number: ${{ needs.extractIssueNumber.outputs.issue-number }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   viewDebug:
     name: viewDebug calculateStatusMessage
@@ -87,6 +87,8 @@ jobs:
         uses: hmarr/debug-action@v2
     env:
       calculateStatusMessage: ${{ needs.calculateStatusMessage.outputs.status }}
+      issue-number: ${{ needs.extractIssueNumber.outputs.issue-number }}
+
 
   changeToAwaitingApproval:
     name: Update ticket status to Awaiting Approval
