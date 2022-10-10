@@ -118,6 +118,7 @@ jobs:
 
   ensureWellFormattedIssueTitle:
     runs-on: ubuntu-latest
+    name: Ensure a well formatted Issue Title
     steps:
     - uses: tzkhan/pr-update-action@v2
       with:
@@ -125,11 +126,10 @@ jobs:
         base-branch-regex: '[a-z\d-_.\\/]+'
         head-branch-regex: 'ISSUE_\d+'
         lowercase-branch: false
-        title-template: '[%headbranch%] '
+        title-template: '%headbranch% - '
         body-template: |
-          Merging into '%basebranch%'
-          [Link to %headbranch%](https://github.com/keif-gwinn/3drepo.io/issues/%headbranch%)
-        body-update-action: 'suffix'
+          This fixes [Link to %headbranch%](https://github.com/keif-gwinn/3drepo.io/issues/%headbranch%) by merging into '%basebranch%'
+        body-update-action: 'prefix'
         body-uppercase-base-match: true
 
 # make sure we're not merging DevOps changes
