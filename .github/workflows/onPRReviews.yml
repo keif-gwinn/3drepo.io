@@ -42,7 +42,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set status message from input    
-        run: | 
+        run: |
+          set -ex 
           case $ACTION in
             review_requested ) 
               echo "::set-output name=status::Awaiting Approval" 
