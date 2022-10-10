@@ -90,7 +90,7 @@ jobs:
           github_token: ${{ secrets.PROJ_MANAGEMENT_TOKEN }}
           organization: keif-gwinn
           project_number: 1
-          content_id: https://api.github.com/repos/keif-gwinn/3drepo.io/issues/${{ needs.extractIssueNumber.outputs.issue-number }}
+          content_id: "https://api.github.com/repos/keif-gwinn/3drepo.io/issues/${{ needs.extractIssueNumber.outputs.issue-number }}"
           field: Status
           value: ${{ needs.calculateStatusMessage.outputs.status }}
     env:
@@ -112,7 +112,7 @@ jobs:
           github_token: ${{ secrets.PROJ_MANAGEMENT_TOKEN }}
           organization: keif-gwinn
           project_number: 1
-          content_id: https://api.github.com/repos/keif-gwinn/3drepo.io/issues/${{ needs.extractIssueNumber.outputs.issue-number }}
+          content_id: "https://api.github.com/repos/keif-gwinn/3drepo.io/issues/${{ needs.extractIssueNumber.outputs.issue-number }}"
           field: Status
           value: ${{ needs.calculateStatusMessage.outputs.status }}
 
