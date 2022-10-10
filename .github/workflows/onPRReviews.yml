@@ -124,6 +124,7 @@ jobs:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
         base-branch-regex: '[a-z\d-_.\\/]+'
         head-branch-regex: 'ISSUE_\d+'
+        lowercase-branch: false
         title-template: '[%headbranch%] '
         body-template: |
           Merging into '%basebranch%'
