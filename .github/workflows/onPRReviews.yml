@@ -47,12 +47,15 @@ jobs:
             review_requested ) 
               echo "::set-output name=status::Awaiting Approval" 
               ;;
-            opened ) 
-              echo "::set-output name=status::In Progress" 
-              ;;
             ready_for_review ) 
               echo "::set-output name=status::Awaiting Approval" 
               ;;
+            opened ) 
+              echo "::set-output name=status::In Progress" 
+              ;;
+            review_request_removed )
+              echo "::set-output name=status::In Progress" 
+              ;;            
           esac
     env:
       ACTION:  ${{ github.event.action }}
@@ -76,6 +79,8 @@ jobs:
           content_id: ${{ needs.extractIssueNumber.outputs.issue-number }}
           field: Status
           value: ${{ needs.calculateStatusMessage.outputs.status }}
+    env:
+      calculateStatusMessage: ${{ needs.calculateStatusMessage.outputs.status }}
 
   changeToInProgress:
     name: Update ticket status to In Progress
