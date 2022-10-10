@@ -40,7 +40,6 @@ jobs:
   calculateStatusMessage:
     name: Work out if Awaiting Approval
     if: ${{ github.event.issue.pull_request }}
-    needs: extractIssueNumber
     runs-on: ubuntu-latest
     steps:
       - name: Set status message from input    
@@ -63,7 +62,7 @@ jobs:
     name: Update ticket status to Awaiting Approval
     if: needs.calculateStatusMessage.outputs.status == 'Awaiting Approval'
     runs-on: ubuntu-latest
-    needs: calculateStatusMessage
+    needs: [ calculateStatusMessage, extractIssueNumber ]
     steps:
       - name: Output status
         uses: hmarr/debug-action@v2
@@ -83,7 +82,7 @@ jobs:
     name: Update ticket status to In Progress
     if: needs.calculateStatusMessage.outputs.status == 'In Progress'
     runs-on: ubuntu-latest
-    needs: calculateStatusMessage
+    needs: [ calculateStatusMessage, extractIssueNumber ]
     steps:
       - name: Output status
         uses: hmarr/debug-action@v2
