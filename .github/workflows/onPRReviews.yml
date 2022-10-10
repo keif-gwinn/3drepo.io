@@ -76,7 +76,7 @@ jobs:
         uses: keifgwinn/extract-content-id-from-issue-number@v1.0.2
         with:
           issue-number: "${{ needs.extractIssueNumber.outputs.issue-number }}"
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
+          # github-token: "${{ secrets.GITHUB_TOKEN }}"
 
   viewDebug:
     name: viewDebug calculateStatusMessage
