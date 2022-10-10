@@ -41,7 +41,7 @@ jobs:
     name: Identify status message
     runs-on: ubuntu-latest
     outputs: 
-      status: ${{ steps.calculateStatusMessage.setStatusOutput.outputs.status }}
+      status: ${{ steps.setStatusOutput.outputs.status }}
     steps:
       - name: Set status message from input 
         id: setStatusOutput   
@@ -62,7 +62,7 @@ jobs:
               ;;            
           esac
     env:
-      ACTION:  ${{ github.event.action }}
+      ACTION: ${{ github.event.action }}
 
   viewDebug:
     name: viewDebug calculateStatusMessage
