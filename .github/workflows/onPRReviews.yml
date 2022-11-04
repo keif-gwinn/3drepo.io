@@ -87,12 +87,12 @@ jobs:
           ACTION: ${{ github.event.action }}
       - name: Update status
         id: update_status
-        uses: keif-gwinn/update-project-action@1.0.6
+        uses: keif-gwinn/update-project-action@1.0.7
         with:
           github_token: ${{ secrets.PROJ_MANAGEMENT_TOKEN }}
           organization: keif-gwinn
           project_number: 1
-          content_id: ${{ needs.getContentID.outputs.content-id }}
+          content_id: ${{ steps.getContentIdFromIssue.outputs.content-id }}
           field: Status
           value: ${{ steps.setStatusOutput.outputs.status }}
   
