@@ -50,34 +50,6 @@ jobs:
           pr: ${{ steps.condval.outputs.value }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-#  if someone has been assigned a reviewer -> change issue status to "awaiting approval"
-  calculateStatusMessage:
-    name: Identify status message
-    runs-on: ubuntu-latest
-    outputs: 
-      status: ${{ steps.setStatusOutput.outputs.status }}
-    steps:
-      - name: Set status message from input 
-        id: setStatusOutput   
-        run: |
-          set -ex 
-          case $ACTION in
-            review_requested ) 
-              echo "status=Awaiting Approval" >> $GITHUB_OUTPUT
-              ;;
-            ready_for_review ) 
-              echo "status=Awaiting Approval" >> $GITHUB_OUTPUT
-              ;;
-            opened )
-              echo "status=In Progress" >> $GITHUB_OUTPUT
-              ;;
-            review_request_removed )
-              echo "status=In Progress" >> $GITHUB_OUTPUT
-              ;;            
-          esac
-    env:
-      ACTION: ${{ github.event.action }}
-
   updateProjectTicketStatus:
     name: Update Project Ticket Status
     runs-on: ubuntu-latest
@@ -85,7 +57,7 @@ jobs:
     steps:
       - name: Update status
         id: update_status
-        uses: keif-gwinn/update-project-action@1.0.1
+        uses: keif-gwinn/update-project-action@1.0.2
         with:
           github_token: ${{ secrets.PROJ_MANAGEMENT_TOKEN }}
           organization: keif-gwinn
