@@ -14,7 +14,7 @@ jobs:
       - name: Extract Issue Number from PR
         uses: keif-gwinn/extract-issue-number-from-PR-merge@1.0.0
         with:
-          pr: ${{ github.event.number }} # what is happening?
+          pr: ${{ github.event.number }}
           base: staging
           github-token: ${{ secrets.GITHUB_TOKEN }}
         id: commitMsgParser
@@ -89,16 +89,14 @@ jobs:
       calculateStatusMessage: ${{ needs.calculateStatusMessage.outputs.status }}
       issue-number: ${{ needs.extractIssueNumber.outputs.issue-number }}
 
-
   changeToAwaitingApproval:
     name: Update ticket status to Awaiting Approval
     if: needs.calculateStatusMessage.outputs.status == 'Awaiting Approval'
     runs-on: ubuntu-latest
     needs: [ calculateStatusMessage, getContentID ]
     steps:
-      - name: Output status
-        uses: hmarr/debug-action@v2
-    
+      # - name: Output status
+      #   uses: hmarr/debug-action@v2
       - name: Update status
         id: update_status
         uses: github/update-project-action@v2
@@ -119,12 +117,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ calculateStatusMessage, getContentID ]
     steps:
-      - name: Output status
-        uses: hmarr/debug-action@v2
+      # - name: Output status
+      #   uses: hmarr/debug-action@v2
     
       - name: Update status
         id: update_status
-        uses: github/update-project-action@v2
+        uses: keif-gwinn/update-project-action@1.0.0
         with:
           github_token: ${{ secrets.PROJ_MANAGEMENT_TOKEN }}
           organization: keif-gwinn
