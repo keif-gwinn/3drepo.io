@@ -117,8 +117,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ calculateStatusMessage, getContentID ]
     steps:
-      # - name: Output status
-      #   uses: hmarr/debug-action@v2
+      - name: Output status
+        uses: hmarr/debug-action@v2
     
       - name: Update status
         id: update_status
