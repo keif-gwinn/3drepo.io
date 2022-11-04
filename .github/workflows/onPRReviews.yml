@@ -49,16 +49,16 @@ jobs:
           set -ex 
           case $ACTION in
             review_requested ) 
-              echo "status=Awaiting Approval >> $GITHUB_OUTPUT" 
+              echo "status=Awaiting Approval" >> $GITHUB_OUTPUT
               ;;
             ready_for_review ) 
-              echo "status=Awaiting Approval >> $GITHUB_OUTPUT" 
+              echo "status=Awaiting Approval" >> $GITHUB_OUTPUT
               ;;
             opened )
-              echo "status=In Progress >> $GITHUB_OUTPUT" 
+              echo "status=In Progress" >> $GITHUB_OUTPUT
               ;;
             review_request_removed )
-              echo "status=In Progress >> $GITHUB_OUTPUT" 
+              echo "status=In Progress" >> $GITHUB_OUTPUT
               ;;            
           esac
     env:
