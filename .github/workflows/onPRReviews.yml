@@ -99,7 +99,7 @@ jobs:
       #   uses: hmarr/debug-action@v2
       - name: Update status
         id: update_status
-        uses: github/update-project-action@v2
+        uses: keif-gwinn/update-project-action@1.0.0
         with:
           github_token: ${{ secrets.PROJ_MANAGEMENT_TOKEN }}
           organization: keif-gwinn
