@@ -12,7 +12,7 @@ jobs:
       issue-number: ${{ steps.commitMsgParser.outputs.issue-number }}
     steps:
       - name: Extract Issue Number from PR
-        uses: carmenfan/extract-issue-number-from-PR-merge@v1.1
+        uses: keif-gwinn/extract-issue-number-from-PR-merge@1.0.0
         with:
           pr: ${{ github.event.number }} # what is happening?
           base: staging
