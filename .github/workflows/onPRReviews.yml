@@ -137,7 +137,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Ensure a well formatted Issue Title
     steps:
-    - uses: tzkhan/pr-update-action@v2
+    - uses: keif-gwinn/pr-update-action@1.0.0
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
         base-branch-regex: '[a-z\d-_.\\/]+'
