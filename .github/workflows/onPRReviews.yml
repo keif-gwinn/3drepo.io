@@ -113,7 +113,7 @@ jobs:
         # body-update-action: 'prefix'
         # body-uppercase-base-match: true
 
-# make sure we're not merging DevOps changes
+  # make sure we're not merging DevOps changes
   devOpsSanityCheck:
     name: Ensure that custom settings are not being merged
     if: ${{ github.event.issue.pull_request }} 
