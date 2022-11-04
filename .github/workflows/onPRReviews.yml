@@ -92,7 +92,7 @@ jobs:
           github_token: ${{ secrets.PROJ_MANAGEMENT_TOKEN }}
           organization: keif-gwinn
           project_number: 1
-          content_id: ${{ steps.getContentID.outputs.content-id }}
+          content_id: ${{ needs.getContentID.outputs.content-id }}
           field: Status
           value: ${{ steps.setStatusOutput.outputs.status }}
   
