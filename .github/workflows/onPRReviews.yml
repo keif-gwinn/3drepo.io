@@ -57,7 +57,7 @@ jobs:
     outputs: 
       content-id: ${{ steps.getContentIdFromIssue.outputs.content-id }}
       status: ${{ steps.setStatusOutput.outputs.status }}
-    needs: [ extractIssueNumber, getContentID ]
+    needs: [ extractIssueNumber ]
     steps:
       - name: Get Content-ID From Issue Number
         id: getContentIdFromIssue
