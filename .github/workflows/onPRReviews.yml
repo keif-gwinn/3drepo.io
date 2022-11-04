@@ -54,11 +54,12 @@ jobs:
   updateProjectTicketStatus:
     name: Update Project Ticket Status
     runs-on: ubuntu-latest
+    outputs: 
+      content-id: ${{ steps.getContentIdFromIssue.outputs.content-id }}
+      status: ${{ steps.setStatusOutput.outputs.status }}
     needs: [ extractIssueNumber ]
     steps:
       - name: Get Content-ID From Issue Number
-        outputs: 
-          content-id: ${{ steps.getContentIdFromIssue.outputs.content-id }}
         id: getContentIdFromIssue
         uses: keifgwinn/extract-content-id-from-issue-number@v1
         with:
