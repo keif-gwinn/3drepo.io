@@ -11,7 +11,22 @@ jobs:
     outputs: 
       issue-number: ${{ steps.commitMsgParser.outputs.issue-number }}
     steps:
+      - uses: haya14busa/action-cond@v1
+        id: condval
+        with:
+          cond: ${{ github.event_name == 'pull_request' }}
+          if_true: ${{ github.event.number }}
+          if_false: ${{ github.event.pull_request.number }}
       - name: Extract Issue Number from PR
+        if: ${{ github.event.issue.pull_request }}
+        uses: keif-gwinn/extract-issue-number-from-PR-merge@1.0.0
+        with:
+          pr: ${{ steps.condval.outputs.value }}
+          base: staging
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        id: commitMsgParser
+      - name: Extract Issue Number from PR
+        if: ${{ github.event.issue.pull_request_review }}
         uses: keif-gwinn/extract-issue-number-from-PR-merge@1.0.0
         with:
           pr: ${{ github.event.number }}
@@ -19,6 +34,13 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
         id: commitMsgParser
 
+
+
+      - name: Check reviews
+        uses: carmenfan/all-reviewers-approved@v1.0
+        with:
+          pr: ${{ steps.condval.outputs.value }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
   # getContentID:
   #   name: Extract the content-id for the related issue
   #   runs-on: ubuntu-latest
