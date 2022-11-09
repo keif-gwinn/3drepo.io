@@ -25,22 +25,12 @@ jobs:
           base: staging
           github-token: ${{ secrets.GITHUB_TOKEN }}
         id: commitMsgParser
-      - name: Extract Issue Number from PR
-        if: ${{ github.event.issue.pull_request_review }}
-        uses: keif-gwinn/extract-issue-number-from-PR-merge@1.0.0
-        with:
-          pr: ${{ github.event.number }}
-          base: staging
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-        id: commitMsgParser
-
-
-
       - name: Check reviews
         uses: carmenfan/all-reviewers-approved@v1.0
         with:
           pr: ${{ steps.condval.outputs.value }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          
   # getContentID:
   #   name: Extract the content-id for the related issue
   #   runs-on: ubuntu-latest
