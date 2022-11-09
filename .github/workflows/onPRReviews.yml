@@ -25,29 +25,9 @@ jobs:
           base: staging
           github-token: ${{ secrets.GITHUB_TOKEN }}
         id: commitMsgParser
-      - name: Check reviews
-        uses: carmenfan/all-reviewers-approved@v1.0
-        with:
-          pr: ${{ steps.condval.outputs.value }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          
-  # getContentID:
-  #   name: Extract the content-id for the related issue
-  #   runs-on: ubuntu-latest
-  #   needs: extractIssueNumber
-  #   outputs: 
-  #     content-id: ${{ steps.getContentIdFromIssue.outputs.content-id }}
-  #   steps:
-  #     - name: Get Content-ID From Issue Number
-  #       id: getContentIdFromIssue
-  #       uses: keifgwinn/extract-content-id-from-issue-number@v1
-  #       with:
-  #         issue-number: ${{ needs.extractIssueNumber.outputs.issue-number }}
-  #         github-token: ${{ secrets.GITHUB_TOKEN }}
-          
+
   checkMergeReady:
     name: Ensure all reviewers have approved the PR
-    if: ${{ github.event.issue.pull_request }}
     runs-on: ubuntu-latest
     steps:
       - uses: haya14busa/action-cond@v1
@@ -156,3 +136,18 @@ jobs:
   #   env:
   #     calculateStatusMessage: ${{ needs.calculateStatusMessage.outputs.status }}
   #     issue-number: ${{ needs.extractIssueNumber.outputs.issue-number }}
+  
+  # getContentID:
+  #   name: Extract the content-id for the related issue
+  #   runs-on: ubuntu-latest
+  #   needs: extractIssueNumber
+  #   outputs: 
+  #     content-id: ${{ steps.getContentIdFromIssue.outputs.content-id }}
+  #   steps:
+  #     - name: Get Content-ID From Issue Number
+  #       id: getContentIdFromIssue
+  #       uses: keifgwinn/extract-content-id-from-issue-number@v1
+  #       with:
+  #         issue-number: ${{ needs.extractIssueNumber.outputs.issue-number }}
+  #         github-token: ${{ secrets.GITHUB_TOKEN }}
+          
