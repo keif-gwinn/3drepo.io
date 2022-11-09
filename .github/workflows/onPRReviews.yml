@@ -19,7 +19,7 @@ jobs:
           if_false: ${{ github.event.pull_request.number }}
       - name: Extract Issue Number from PR
         if: ${{ github.event.issue.pull_request }}
-        uses: keif-gwinn/extract-issue-number-from-PR-merge@1.0.0
+        uses: carmenfan/extract-issue-number-from-PR-merge@v1.1
         with:
           pr: ${{ steps.condval.outputs.value }}
           base: staging
