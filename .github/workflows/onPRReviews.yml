@@ -68,11 +68,12 @@ jobs:
 #  if someone has been assigned a reviewer -> change issue status to "awaiting approval"
   updateProjectTicketStatus:
     name: Update Project Ticket Status
+    if: ! ${{ needs.checkMergeReady.outputs.approved }} 
     runs-on: ubuntu-latest
     outputs: 
       content-id: ${{ needs.getIssueNumber.outputs.content-id }}
       status: ${{ steps.setStatusOutput.outputs.status }}
-    needs: [ getIssueNumber ]
+    needs: [ getIssueNumber, checkMergeReady ]
     steps:
       - name: Set status message from input 
         id: setStatusOutput   
