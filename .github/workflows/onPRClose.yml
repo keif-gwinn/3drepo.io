@@ -14,7 +14,7 @@ jobs:
         with:
           pr: ${{ github.event.number }}
           base: staging
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.PROJ_MANAGEMENT_TOKEN }}
         id: commitMsgParser
   tagOnPRMerge:
     name: Tag merged issues as In staging if applicable
@@ -27,7 +27,7 @@ jobs:
         with:
           issue-number: ${{ needs.extractIssueNumber.outputs.issue-number }}
           label: 'in staging'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.PROJ_MANAGEMENT_TOKEN }}
   destroy:
     name: Call Azure Pipeline
     runs-on: ubuntu-latest
