@@ -122,7 +122,6 @@ jobs:
   # make sure we're not merging DevOps changes
   devOpsSanityCheck:
     name: Ensure that custom settings are not being merged
-    if: ${{ github.event.issue.pull_request }} 
     runs-on: ubuntu-latest
     steps:
       - name: Checkout .azure/build-and-deploy.yaml
