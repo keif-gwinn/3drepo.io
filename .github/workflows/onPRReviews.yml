@@ -118,10 +118,6 @@ jobs:
         head-branch-regex: 'ISSUE_\d+'
         lowercase-branch: false
         title-template: '%headbranch% - '
-        body-template: |
-          This fixes [#%headbranch%](https://github.com/keif-gwinn/3drepo.io/issues/%headbranch%) by merging into '%basebranch%'
-        body-update-action: 'append'
-        body-uppercase-base-match: true
 
   # make sure we're not merging DevOps changes
   devOpsSanityCheck:
