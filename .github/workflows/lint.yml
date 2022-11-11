@@ -7,7 +7,7 @@ on:
     branches:
       - master
       - staging
-      
+
   # Replace pull_request with pull_request_target if you
   # plan to use this action with forks, see the Limitations section
   pull_request:
@@ -37,20 +37,20 @@ jobs:
       - name: Install Backend Node.js dependencies
         run: cd backend ; yarn install --network-timeout 100000 --immutable --immutable-cache --check-cache
 
-      - name: Run backend lint
+      - name: Run Backend lint
         uses: wearerequired/lint-action@v2
         with:
           auto_fix: true
           check_name: "${linter} ${dir}"
           eslint: true
-          eslint_dir: backend/
+          eslint_dir: ./backend/
           git_email: devops@3drepo.com
 
-      - name: Run backend tests
+      - name: Run Backend tests
         run: cd backend ; yarn run-script test:v5 
 
   run-frontend-tests:
-    name: Run frontend tests
+    name: Run Frontend tests
     runs-on: ubuntu-latest
 
     steps:
@@ -65,14 +65,14 @@ jobs:
       - name: Install Frontend Node.js dependencies
         run: cd frontend ; yarn install --network-timeout 100000 --immutable --immutable-cache --check-cache
 
-      - name: Run frontend lint
+      - name: Run Frontend lint
         uses: wearerequired/lint-action@v2
         with:
           auto_fix: true
           check_name: "${linter} ${dir}"
           eslint: true
-          eslint_dir: frontend/
+          eslint_dir: ./frontend/
           git_email: devops@3drepo.com
 
-      - name: Run frontend tests
-        run: cd frontend ; yarn run-script test
+      - name: Run Frontend tests
+        run: cd Frontend ; yarn run-script test
