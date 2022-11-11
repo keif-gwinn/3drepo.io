@@ -34,8 +34,6 @@ jobs:
         env:
           RABBITMQ_DEFAULT_USER: guest
           RABBITMQ_DEFAULT_PASS: guest
-        ports:
-          - 5672
           
     steps:
       - name: Check out Git repository
