@@ -1,4 +1,4 @@
-name: Lint and Test
+name: Automatic Testing
 
 on:
   # Trigger the workflow on push or pull request,
@@ -37,17 +37,20 @@ jobs:
       - name: Install Backend Node.js dependencies
         run: cd backend ; yarn install --network-timeout 100000 --immutable --immutable-cache --check-cache
 
-      - name: Run Backend lint
-        uses: wearerequired/lint-action@v2
-        with:
-          auto_fix: true
-          check_name: "${linter} ${dir}"
-          eslint: true
-          eslint_dir: ./backend/
-          git_email: devops@3drepo.com
+      - name: Run Backend tests
+        run: cd backend ; yarn lint
+
+      # - name: Run Backend lint
+      #   uses: wearerequired/lint-action@v2
+      #   with:
+      #     auto_fix: true
+      #     check_name: "${linter} ${dir}"
+      #     eslint: true
+      #     eslint_dir: ./backend/
+      #     git_email: devops@3drepo.com
 
       - name: Run Backend tests
-        run: cd backend ; yarn run-script test:v5 
+        run: cd backend ; yarn test:v5 
 
   run-frontend-tests:
     name: Run Frontend tests
@@ -65,14 +68,17 @@ jobs:
       - name: Install Frontend Node.js dependencies
         run: cd frontend ; yarn install --network-timeout 100000 --immutable --immutable-cache --check-cache
 
-      - name: Run Frontend lint
-        uses: wearerequired/lint-action@v2
-        with:
-          auto_fix: true
-          check_name: "${linter} ${dir}"
-          eslint: true
-          eslint_dir: ./frontend/
-          git_email: devops@3drepo.com
+      - name: Run Frontend tests
+        run: cd frontend ; yarn lint
+
+      # - name: Run Frontend lint
+      #   uses: wearerequired/lint-action@v2
+      #   with:
+      #     auto_fix: true
+      #     check_name: "${linter} ${dir}"
+      #     eslint: true
+      #     eslint_dir: ./frontend/
+      #     git_email: devops@3drepo.com
 
       - name: Run Frontend tests
-        run: cd Frontend ; yarn run-script test
+        run: cd frontend ; yarn test
