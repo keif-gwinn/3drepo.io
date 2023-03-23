@@ -35,17 +35,6 @@ jobs:
         with:
           pr: ${{ github.event.pull_request.number }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Update status
-        if: ${{ steps.checkReviews.outputs.approved }}
-        id: update_status
-        uses: 3drepo/update-project-action@1.0.12
-        with:
-          github_token: ${{ secrets.PROJ_MANAGEMENT_TOKEN }}
-          organization: 3drepo
-          project_number: 1
-          content_id: ${{ needs.getIssueNumber.outputs.content-id }}
-          field: Status
-          value: 'Done'
 
 #  if someone has been assigned a reviewer -> change issue status to "awaiting approval"
   update-project-issue-status:
