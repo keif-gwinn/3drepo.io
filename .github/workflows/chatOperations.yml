@@ -9,7 +9,7 @@ jobs:
       - name: Slash Command Dispatch
         uses: peter-evans/slash-command-dispatch@v3
         with:
-          token: ${{ secrets.PAT }}
+          token: ${{ secrets.PROJ_MANAGEMENT_TOKEN }}
           commands: |
             deploy
             destroy
