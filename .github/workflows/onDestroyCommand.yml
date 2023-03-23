@@ -1,4 +1,4 @@
-name: Destroy From Staging
+name: on Destroy Command
 
 # concurrency:
 #   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -6,7 +6,6 @@ name: Destroy From Staging
 
 permissions:
   checks: write
-  contents: write
   deployments: write
 
 on: 
