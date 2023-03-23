@@ -1,0 +1,166 @@
+name: Deploy To Staging
+
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+#   cancel-in-progress: true
+
+permissions:
+  checks: write
+  contents: write
+  deployments: write
+
+on: 
+  repository_dispatch:
+    types: [deploy]
+
+jobs:
+  get-details:
+    name: Get PR and Issue Details
+    runs-on: ubuntu-latest
+    outputs:
+      issue-number: ${{ steps.commitMsgParser.outputs.issue-number }}
+      issue-content-id: ${{ steps.commitMsgParser.outputs.issue-content-id }}
+      deployment-id: ${{ steps.githubdeployment.outputs.deployment_id }}
+    steps:
+      - name: Extract Issue Number from PR
+        uses: 3drepo/extract-pr-information@v1
+        with:
+          pr: ${{ github.event.pull_request.number }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        id: commitMsgParser
+
+      - uses: chrnorm/deployment-action@v2
+        name: Create GitHub deployment
+        id: githubdeployment
+        with:
+          token: '${{ github.token }}'
+          state: 'in_progress'
+          environment: issue-${{ steps.commitMsgParser.outputs.issue-number }}
+
+  build-images:
+    needs: [ get-details ]
+    env:
+      REGISTRY_LOGIN_SERVER: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+    concurrency:
+      # If a previous run is ongoing with the same head_ref (it's a run on the
+      # same PR) then cancel it to save time. If it isn't a PR, only cancel the
+      # previous run if it's on the same commit SHA. This prevents a run for a
+      # commit push from cancelling a previous commit push's build, since we
+      # want an image built and tagged for each commit.
+      group: build-images-${{ matrix.image }}-${{ github.head_ref || github.sha }}
+      cancel-in-progress: true
+    permissions:
+      contents: read  # Read the repo contents.
+      # id-token: write # Produce identity token for keyless signing. #might not need this, testing.
+     
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+        - io
+        # - io-debug
+
+        include:
+        - image: io
+          dockerfile: .azure/Docker/Dockerfile
+          platforms: linux/amd64 #,linux/arm64
+          image-name: "3drepo.azurecr.io/3drepo.io"
+          tag: ${{ github.sha }}
+          release-tag: latest
+
+        # - image: io-debug
+        #   dockerfile: .azure/Docker/Dockerfile_debug
+        #   platforms: linux/amd64,linux/arm64
+        #   image-name: "${{ secrets.REGISTRY_LOGIN_SERVER }}/3drepo.io"
+        #   tag: ${{ github.sha }}-debug
+        #   release-tag: debug
+
+    steps:
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+
+    - name: 'Log into ACR'
+      uses: azure/docker-login@v1
+      with:
+        login-server: 3drepo.azurecr.io
+        username: ${{  env.REGISTRY_USERNAME }}
+        password: ${{  env.REGISTRY_PASSWORD }}
+
+    # Build and push with Docker.
+    - uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18 # v2.1.0
+      with:
+        platforms: ${{ matrix.platforms }}
+
+    - uses: docker/setup-buildx-action@f03ac48505955848960e80bbb68046aa35c7b9e7 # v2.4.1
+      with:
+        driver-opts: |
+          image=moby/buildkit:master
+
+    - name: Docker meta
+      id: docker-tag-creation # you'll use this in the next step
+      uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96 # v4.3.0
+      with:
+        # list of Docker images to use as base name for tags
+        images: |
+          "3drepo.azurecr.io/3drepo.io"
+        # Docker tags based on the following events/attributes
+        tags: |
+          type=raw,value=ISSUE_${{ needs.get-details.outputs.issue-number }}
+          type=schedule
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=semver,pattern={{major}}
+          type=sha
+          type=sha,format=long,prefix=
+
+    - uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671 # v4.0.0
+      id: build-and-push
+      with:
+        context: .
+        file: ${{ matrix.dockerfile }}
+        platforms: ${{ matrix.platforms }}
+        push: true # ${{ github.event_name != 'pull_request' }} # Only push if not a PR.
+        tags: ${{ steps.docker-tag-creation.outputs.tags }}
+        labels: ${{ steps.docker-tag-creation.outputs.labels }}
+        no-cache-filters: certs
+        # https://github.com/docker/build-push-action/blob/master/docs/advanced/cache.md#github-cache
+        cache-from: type=registry,ref=3drepo.azurecr.io/3drepo.io:buildcache,compression=zstd
+        cache-to: type=registry,ref=3drepo.azurecr.io/3drepo.io:buildcache,mode=max
+
+
+  deploy-branch:
+    name: Call Azure Deploy Pipeline
+    runs-on: ubuntu-latest
+    needs: [ get-details, build-images ]
+    steps:
+    - name: Azure Pipelines Action
+      if: needs.get-details.outputs.issue-number
+      uses: 3drepo/pipelines@ISSUE_1
+      with:
+        azure-devops-project-url: https://dev.azure.com/3drepo/3drepo.io
+        azure-pipeline-name: 'deploy'
+        azure-devops-token: ${{ secrets.AZURE_DEVOPS_TOKEN }}
+        azure-pipeline-variables:  '{"branchName": "issue-${{ needs.get-details.outputs.issue-number }}","tag":"${{ github.sha }}"}'
+
+    - name: Update deployment status (success)
+      if: success()
+      uses: chrnorm/deployment-status@v2
+      with:
+        token: '${{ github.token }}'
+        state: 'success'
+        deployment-id: ${{ needs.get-details.outputs.deployment-id }}
+        environment-url: https://issue-${{ steps.commitMsgParser.outputs.issue-number }}.staging.dev.3drepo.io
+        environment: issue-${{ steps.commitMsgParser.outputs.issue-number }}
+
+    - name: Update deployment status (failure)
+      if: failure()
+      uses: chrnorm/deployment-status@v2
+      with:
+        token: '${{ github.token }}'
+        state: 'failure'
+        deployment-id: ${{ needs.get-details.outputs.deployment-id }}
