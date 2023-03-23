@@ -1,7 +1,7 @@
 name: Chat Operations Dispatch
 on:
   issue_comment:
-    types: [created]
+    types: [ created ]
 jobs:
   slashCommandDispatch:
     runs-on: ubuntu-latest
