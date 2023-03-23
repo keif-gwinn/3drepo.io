@@ -15,6 +15,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+const { times } = require('lodash');
+
 const { templates } = require('../../../../src/v5/utils/responseCodes');
 const { src } = require('../../helper/path');
 const { generateRandomString, generateUUID } = require('../../helper/services');
@@ -61,29 +63,28 @@ const testGetTotalSize = () => {
 
 const testGetAllRemovableEntriesByType = () => {
 	describe('Get all removable entries by type', () => {
-		const refCol = generateRandomString();
+		const refCol = `${generateRandomString()}.ref`;
 
 		test('should return all removable file entries from collection', async () => {
 			const teamspace = generateRandomString();
 
-			const aggRes = [{ _id: generateRandomString(), links: [generateRandomString()] }];
-			const fnAggregate = jest.spyOn(db, 'aggregate').mockResolvedValue(aggRes);
-
-			await expect(FileRefs.getAllRemovableEntriesByType(teamspace, refCol)).resolves.toEqual(aggRes);
-
-			const query = [
-				{ $match: { noDelete: { $exists: false }, type: { $ne: 'http' } } },
-				{ $group: { _id: '$type', links: { $addToSet: '$link' } } },
+			const expectedRes = [
+				{ _id: generateRandomString(), links: times(19, () => generateRandomString()) },
+				{ _id: generateRandomString(), links: times(11, () => generateRandomString()) },
 			];
 
-			expect(fnAggregate.mock.calls.length).toBe(1);
+			const findRes = expectedRes.flatMap(({ _id, links }) => links.map((link) => ({ type: _id, link })));
 
-			fnAggregate.mock.calls.forEach((call, i) => {
-				expect(call[0]).toEqual(teamspace);
-				expect(fnAggregate.mock.calls[i][0]).toEqual(teamspace);
-				expect(fnAggregate.mock.calls[i][1]).toEqual(refCol);
-				expect(fnAggregate.mock.calls[i][2]).toEqual(query);
-			});
+			const findFn = jest.spyOn(db, 'find').mockResolvedValue(findRes);
+
+			await expect(FileRefs.getAllRemovableEntriesByType(teamspace, refCol)).resolves.toEqual(expectedRes);
+
+			const query = { noDelete: { $exists: false }, type: { $ne: 'http' } };
+			const projection = { type: 1, link: 1 };
+
+			expect(findFn).toHaveBeenCalledTimes(1);
+
+			expect(findFn).toHaveBeenCalledWith(teamspace, refCol, query, projection);
 		});
 	});
 };
@@ -101,7 +102,7 @@ const testGetRefEntry = () => {
 			await expect(FileRefs.getRefEntry(teamspace, collection, id)).resolves.toEqual(output);
 
 			expect(fn).toHaveBeenCalledTimes(1);
-			expect(fn).toHaveBeenCalledWith(teamspace, `${collection}.ref`, { _id: id });
+			expect(fn).toHaveBeenCalledWith(teamspace, `${collection}.ref`, { _id: id }, undefined);
 		});
 
 		test('should throw error if the entry is not found', async () => {
@@ -126,7 +127,7 @@ const testInsertRef = () => {
 			await expect(FileRefs.insertRef(teamspace, collection, refInfo)).resolves.toEqual(undefined);
 
 			expect(fn).toHaveBeenCalledTimes(1);
-			expect(fn).toHaveBeenCalledWith(teamspace, collection, refInfo);
+			expect(fn).toHaveBeenCalledWith(teamspace, `${collection}.ref`, refInfo);
 		});
 	});
 };
@@ -142,7 +143,40 @@ const testRemoveRef = () => {
 			await expect(FileRefs.removeRef(teamspace, collection, id)).resolves.toEqual(undefined);
 
 			expect(fn).toHaveBeenCalledTimes(1);
-			expect(fn).toHaveBeenCalledWith(teamspace, collection, { _id: id });
+			expect(fn).toHaveBeenCalledWith(teamspace, `${collection}.ref`, { _id: id });
+		});
+	});
+};
+
+const testGetRefsByQuery = () => {
+	describe('Get file refs by query', () => {
+		test('should get file refs if query is satisfied', async () => {
+			const teamspace = generateRandomString();
+			const collection = generateRandomString();
+			const query = { [generateRandomString()]: generateRandomString() };
+
+			const expectedRes = generateRandomString();
+			const fn = jest.spyOn(db, 'find').mockResolvedValueOnce(expectedRes);
+			await expect(FileRefs.getRefsByQuery(teamspace, collection, query)).resolves.toEqual(expectedRes);
+
+			expect(fn).toHaveBeenCalledTimes(1);
+			expect(fn).toHaveBeenCalledWith(teamspace, `${collection}.ref`, query, undefined);
+		});
+	});
+};
+
+const testRemoveRefsByQuery = () => {
+	describe('Remove file refs by query', () => {
+		test('should remove file refs if query is satisfied', async () => {
+			const teamspace = generateRandomString();
+			const collection = `${generateRandomString()}.ref`;
+			const query = { [generateRandomString()]: generateRandomString() };
+
+			const fn = jest.spyOn(db, 'deleteMany').mockResolvedValueOnce(undefined);
+			await expect(FileRefs.removeRefsByQuery(teamspace, collection, query)).resolves.toEqual(undefined);
+
+			expect(fn).toHaveBeenCalledTimes(1);
+			expect(fn).toHaveBeenCalledWith(teamspace, collection, query);
 		});
 	});
 };
@@ -153,4 +187,6 @@ describe('models/fileRefs', () => {
 	testGetRefEntry();
 	testInsertRef();
 	testRemoveRef();
+	testGetRefsByQuery();
+	testRemoveRefsByQuery();
 });

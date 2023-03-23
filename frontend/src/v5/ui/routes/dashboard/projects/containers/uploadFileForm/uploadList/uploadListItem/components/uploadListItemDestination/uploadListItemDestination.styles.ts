@@ -15,34 +15,45 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import styled from 'styled-components';
-import { TextField } from '@mui/material';
+import styled, { css } from 'styled-components';
+import { FormTextField } from '@controls/inputs/formInputs.component';
+import AutocompleteBase from '@mui/material/Autocomplete';
 
-export const DestinationInput = styled(TextField)<{ neworexisting: string }>`
+export const Autocomplete = styled(AutocompleteBase)`
+	.MuiFormHelperText-root {
+		display: none;
+	}
+`;
+
+export type NewOrExisting = '' | 'new' | 'existing';
+export const DestinationInput = styled(FormTextField)<{ neworexisting: NewOrExisting }>`
 	margin: 0;
 	border: none;
+	border-radius: 6px;
 	>.MuiInputBase-root {
-		>.MuiInputBase-input {
-			font-weight: bold;
-			padding: 0;
-			&.Mui-disabled { -webkit-text-fill-color: ${({ theme }) => theme.palette.secondary.main}; }
+		&, &.Mui-focused, &.Mui-error, &.Mui-focused.Mui-error {
+			>.MuiInputBase-input {
+				font-weight: bold;
+				padding: 0;
+				&.Mui-disabled { -webkit-text-fill-color: ${({ theme }) => theme.palette.secondary.main}; }
+			}
 		}
 		${({ neworexisting, theme }) => {
 		if (neworexisting === 'new') {
-			return `
-					>.MuiInputBase-input { color: ${theme.palette.primary.main}; };
-					color: ${theme.palette.primary.main};
-					background-color: ${theme.palette.primary.lightest};
-					fieldset { border: none; }
-				`;
+			return css`
+				>.MuiInputBase-input { color: ${theme.palette.primary.main}; };
+				color: ${theme.palette.primary.main};
+				background-color: ${theme.palette.primary.lightest};
+				fieldset, &:hover fieldset { border: none; }
+			`;
 		}
 		if (neworexisting === 'existing') {
-			return `
-					>.MuiInputBase-input { color: ${theme.palette.secondary.main} };
-					color: ${theme.palette.secondary.main};
-					background-color: ${theme.palette.tertiary.lightest};
-					fieldset { border: none; }
-				`;
+			return css`
+				>.MuiInputBase-input { color: ${theme.palette.secondary.main} };
+				color: ${theme.palette.secondary.main};
+				background-color: ${theme.palette.tertiary.lightest};
+				fieldset, &:hover fieldset { border: none; }
+			`;
 		}
 		return '';
 	}}

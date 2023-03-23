@@ -24,16 +24,28 @@ const Users = require(`${src}/processors/users`);
 
 jest.mock('../../../../src/v5/models/users');
 const UsersModel = require(`${src}/models/users`);
+
 jest.mock('../../../../src/v5/services/mailer');
 const Mailer = require(`${src}/services/mailer`);
+
 jest.mock('../../../../src/v5/services/filesManager');
 const FilesManager = require(`${src}/services/filesManager`);
+
+jest.mock('../../../../src/v5/models/loginRecords');
+const LoginRecords = require(`${src}/models/loginRecords`);
+
+jest.mock('../../../../src/v5/models/notifications');
+const Notifications = require(`${src}/models/notifications`);
+
 jest.mock('../../../../src/v5/services/intercom');
 const Intercom = require(`${src}/services/intercom`);
+
 jest.mock('../../../../src/v5/utils/helper/strings');
 const Strings = require(`${src}/utils/helper/strings`);
+
 jest.mock('../../../../src/v5/services/eventsManager/eventsManager');
 const EventsManager = require(`${src}/services/eventsManager/eventsManager`);
+
 const { events } = require(`${src}/services/eventsManager/eventsManager.constants`);
 const { generateRandomString } = require('../../helper/services');
 
@@ -62,7 +74,7 @@ const user = {
 	},
 };
 
-const getUserByUsernameMock = UsersModel.getUserByUsername.mockImplementation((username) => {
+UsersModel.getUserByUsername.mockImplementation((username) => {
 	if (username === user.user) {
 		return user;
 	}
@@ -71,26 +83,26 @@ const getUserByUsernameMock = UsersModel.getUserByUsername.mockImplementation((u
 });
 
 const verifyMock = UsersModel.verify.mockImplementation(() => user.customData);
-UsersModel.canLogIn.mockImplementation(() => user);
-UsersModel.authenticate.mockResolvedValue(user.user);
 Strings.generateHashString.mockImplementation(() => exampleHashString);
 Strings.formatPronouns.mockImplementation((str) => str);
 
 const testLogin = () => {
 	describe('Login', () => {
 		test('should login with username', async () => {
+			UsersModel.authenticate.mockResolvedValueOnce(user.user);
 			const res = await Users.login(user.user);
 			expect(res).toEqual(user.user);
 		});
 
-		test('should fail if canLogIn fails', async () => {
-			UsersModel.canLogIn.mockImplementationOnce(() => { throw templates.userNotFound; });
-			await expect(Users.login(user.user)).rejects.toEqual(templates.userNotFound);
+		test('should return whatever failure authentication returns', async () => {
+			const err = new Error(generateRandomString());
+			UsersModel.authenticate.mockRejectedValueOnce(err);
+			await expect(Users.login(user.user)).rejects.toEqual(err);
 		});
 	});
 };
 
-const formatUser = (userProfile, hasAvatar, hash) => ({
+const formatUser = (userProfile, hasAvatar, hash, sso) => ({
 	username: userProfile.user,
 	firstName: userProfile.customData.firstName,
 	lastName: userProfile.customData.lastName,
@@ -100,64 +112,65 @@ const formatUser = (userProfile, hasAvatar, hash) => ({
 	countryCode: userProfile.customData.billing.billingInfo.countryCode,
 	company: userProfile.customData.billing.billingInfo.company,
 	...(hash ? { intercomRef: hash } : {}),
+	...(sso ? { sso } : {}),
 });
 
 const tesGetProfileByUsername = () => {
 	describe('Get user profile by username', () => {
+		const projection = {
+			user: 1,
+			'customData.firstName': 1,
+			'customData.lastName': 1,
+			'customData.email': 1,
+			'customData.apiKey': 1,
+			'customData.billing.billingInfo.countryCode': 1,
+			'customData.billing.billingInfo.company': 1,
+			'customData.sso': 1,
+		};
+
 		test('should return user profile', async () => {
-			const projection = {
-				user: 1,
-				'customData.firstName': 1,
-				'customData.lastName': 1,
-				'customData.email': 1,
-				'customData.apiKey': 1,
-				'customData.billing.billingInfo.countryCode': 1,
-				'customData.billing.billingInfo.company': 1,
-			};
+			UsersModel.getUserByUsername.mockResolvedValueOnce(user);
 			FilesManager.fileExists.mockResolvedValueOnce(false);
+
 			const res = await Users.getProfileByUsername(user.user);
 			expect(res).toEqual(formatUser(user, false));
-			expect(getUserByUsernameMock.mock.calls.length).toBe(1);
-			expect(getUserByUsernameMock.mock.calls[0][1]).toEqual(projection);
+			expect(UsersModel.getUserByUsername).toHaveBeenCalledTimes(1);
+			expect(UsersModel.getUserByUsername).toHaveBeenCalledWith(user.user, projection);
 		});
 
 		test('should return user profile with intercom reference if configured', async () => {
-			const projection = {
-				user: 1,
-				'customData.firstName': 1,
-				'customData.lastName': 1,
-				'customData.email': 1,
-				'customData.apiKey': 1,
-				'customData.billing.billingInfo.countryCode': 1,
-				'customData.billing.billingInfo.company': 1,
-			};
+			UsersModel.getUserByUsername.mockResolvedValueOnce(user);
 			FilesManager.fileExists.mockResolvedValueOnce(false);
 
 			const hash = generateRandomString();
 			Intercom.generateUserHash.mockReturnValueOnce(hash);
-
 			const res = await Users.getProfileByUsername(user.user);
 			expect(res).toEqual(formatUser(user, false, hash));
-			expect(getUserByUsernameMock.mock.calls.length).toBe(1);
-			expect(getUserByUsernameMock.mock.calls[0][1]).toEqual(projection);
+			expect(UsersModel.getUserByUsername).toHaveBeenCalledTimes(1);
+			expect(UsersModel.getUserByUsername).toHaveBeenCalledWith(user.user, projection);
 		});
 
 		test('should return user profile with avatar', async () => {
-			const projection = {
-				user: 1,
-				'customData.firstName': 1,
-				'customData.lastName': 1,
-				'customData.email': 1,
-				'customData.apiKey': 1,
-				'customData.billing.billingInfo.countryCode': 1,
-				'customData.billing.billingInfo.company': 1,
-			};
-
+			UsersModel.getUserByUsername.mockResolvedValueOnce(user);
 			FilesManager.fileExists.mockResolvedValueOnce(true);
+
 			const res = await Users.getProfileByUsername(user.user);
 			expect(res).toEqual(formatUser(user, true));
-			expect(getUserByUsernameMock.mock.calls.length).toBe(1);
-			expect(getUserByUsernameMock.mock.calls[0][1]).toEqual(projection);
+			expect(UsersModel.getUserByUsername).toHaveBeenCalledTimes(1);
+			expect(UsersModel.getUserByUsername).toHaveBeenCalledWith(user.user, projection);
+		});
+
+		test('should return user profile with SSO user', async () => {
+			const ssoType = generateRandomString();
+			UsersModel.getUserByUsername.mockResolvedValueOnce({
+				...user, customData: { ...user.customData, sso: { id: generateRandomString(), type: ssoType } },
+			});
+			FilesManager.fileExists.mockResolvedValueOnce(true);
+
+			const res = await Users.getProfileByUsername(user.user);
+			expect(res).toEqual(formatUser(user, true, undefined, ssoType));
+			expect(UsersModel.getUserByUsername).toHaveBeenCalledTimes(1);
+			expect(UsersModel.getUserByUsername).toHaveBeenCalledWith(user.user, projection);
 		});
 	});
 };
@@ -223,9 +236,12 @@ const testSignUp = () => {
 			email: generateRandomString(),
 			password: generateRandomString(),
 			firstName: generateRandomString(),
+			lastName: generateRandomString(),
+			company: generateRandomString(),
+			mailListOptOut: true,
 		};
 
-		test('should sign a user up', async () => {
+		test('should sign a user up and send verification email (non SSO user)', async () => {
 			await Users.signUp(newUserData);
 			expect(UsersModel.addUser).toHaveBeenCalledTimes(1);
 			expect(UsersModel.addUser).toHaveBeenCalledWith({ ...newUserData, token: exampleHashString });
@@ -235,6 +251,27 @@ const testSignUp = () => {
 				email: newUserData.email,
 				firstName: newUserData.firstName,
 				username: newUserData.username,
+			});
+			expect(EventsManager.publish).not.toHaveBeenCalled();
+		});
+
+		test('should generate a password sign a user up and fire VERIFY_USER event (SSO user)', async () => {
+			const sso = { id: generateRandomString() };
+			await Users.signUp({ ...newUserData, sso });
+			expect(UsersModel.addUser).toHaveBeenCalledTimes(1);
+			expect(UsersModel.addUser).toHaveBeenCalledWith({
+				...newUserData,
+				password: exampleHashString,
+				sso,
+			});
+			expect(Mailer.sendEmail).not.toHaveBeenCalled();
+			expect(EventsManager.publish).toHaveBeenCalledTimes(1);
+			expect(EventsManager.publish).toHaveBeenCalledWith(events.USER_VERIFIED, {
+				username: newUserData.username,
+				email: newUserData.email,
+				fullName: `${newUserData.firstName} ${newUserData.lastName}`,
+				company: newUserData.company,
+				mailListOptOut: newUserData.mailListOptOut,
 			});
 		});
 	});
@@ -285,6 +322,27 @@ const testUploadAvatar = () => {
 	});
 };
 
+const testRemoveUser = () => {
+	describe('Removing a user', () => {
+		test('Should call all relevant functions to clean up user data', async () => {
+			const username = generateRandomString();
+			await Users.remove(username);
+
+			expect(UsersModel.removeUser).toHaveBeenCalledTimes(1);
+			expect(UsersModel.removeUser).toHaveBeenCalledWith(username);
+
+			expect(FilesManager.removeFile).toHaveBeenCalledTimes(1);
+			expect(FilesManager.removeFile).toHaveBeenCalledWith(USERS_DB_NAME, AVATARS_COL_NAME, username);
+
+			expect(LoginRecords.removeAllUserRecords).toHaveBeenCalledTimes(1);
+			expect(LoginRecords.removeAllUserRecords).toHaveBeenCalledWith(username);
+
+			expect(Notifications.removeAllUserNotifications).toHaveBeenCalledTimes(1);
+			expect(Notifications.removeAllUserNotifications).toHaveBeenCalledWith(username);
+		});
+	});
+};
+
 describe('processors/users', () => {
 	testLogin();
 	tesGetProfileByUsername();
@@ -294,4 +352,5 @@ describe('processors/users', () => {
 	testVerify();
 	testGetAvatarStream();
 	testUploadAvatar();
+	testRemoveUser();
 });

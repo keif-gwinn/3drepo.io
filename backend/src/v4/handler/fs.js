@@ -73,6 +73,26 @@ class FSHandler {
 		});
 	}
 
+	storeFileStream(stream, dataSize) {
+		const _id = utils.generateUUID({string: true});
+		const folderNames = utils.generateFoldernames(config.fs.levels);
+		const link = path.posix.join(folderNames, _id);
+
+		return new Promise((resolve, reject) => {
+			createFoldersIfNecessary(this.getFullPath(folderNames)).then(() =>{
+				const writeStream = fs.createWriteStream(this.getFullPath(link));
+
+				writeStream.on("finish", () => {
+					resolve({_id, link, size: dataSize, type: "fs"});
+				});
+
+				writeStream.on("errored", reject);
+
+				stream.pipe(writeStream);
+			});
+		});
+	}
+
 	getFileStream(key) {
 		try {
 			return fs.existsSync(this.getFullPath(key)) ?
@@ -96,10 +116,8 @@ class FSHandler {
 	removeFiles(keys) {
 		keys.forEach((key) => {
 			fs.unlink(this.getFullPath(key), (err) => {
-				if (err) {
+				if (err && err.code !== "ENOENT") {
 					systemLogger.logError("File not removed:", {err, key});
-				} else {
-					systemLogger.logInfo("File removed:", key);
 				}
 			});
 		});

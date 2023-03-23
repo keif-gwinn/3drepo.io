@@ -20,6 +20,7 @@ const { appendFavourites, deleteFavourites } = require('./commons/favourites');
 const { getContainerById, getContainers, updateModelSettings } = require('../../../../models/modelSettings');
 const { getLatestRevision, getRevisionByIdOrTag, getRevisionCount, getRevisions, updateRevisionStatus } = require('../../../../models/revisions');
 const Groups = require('./commons/groups');
+const Tickets = require('./commons/tickets');
 const Views = require('./commons/views');
 const fs = require('fs/promises');
 const { getFileAsStream } = require('../../../../services/filesManager');
@@ -29,7 +30,7 @@ const { queueModelUpload } = require('../../../../services/modelProcessing');
 const { templates } = require('../../../../utils/responseCodes');
 const { timestampToString } = require('../../../../utils/helper/dates');
 
-const Containers = { ...Groups, ...Views };
+const Containers = { ...Groups, ...Views, ...Tickets };
 
 Containers.addContainer = addModel;
 
@@ -42,7 +43,7 @@ Containers.getContainerList = async (teamspace, project, user) => {
 	return getModelList(teamspace, project, user, modelSettings);
 };
 
-Containers.getContainerStats = async (teamspace, project, container) => {
+Containers.getContainerStats = async (teamspace, container) => {
 	let latestRev = {};
 	const [settings, revCount] = await Promise.all([
 		getContainerById(teamspace, container, { name: 1, type: 1, properties: 1, status: 1, errorReason: 1 }),
@@ -54,6 +55,7 @@ Containers.getContainerStats = async (teamspace, project, container) => {
 	} catch {
 		// do nothing. A container can have 0 revision.
 	}
+
 	const stats = {
 		type: settings.type,
 		code: settings.properties.code,

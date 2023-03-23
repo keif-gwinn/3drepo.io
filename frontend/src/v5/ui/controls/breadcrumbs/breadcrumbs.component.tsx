@@ -15,15 +15,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 import { useState, MouseEvent } from 'react';
-import HomeIcon from '@assets/icons/home.svg';
-import DownArrowIcon from '@assets/icons/down_arrow.svg';
+import HomeIcon from '@assets/icons/outlined/home-outlined.svg';
+import DownArrowIcon from '@assets/icons/outlined/chevron-outlined.svg';
 import { DASHBOARD_ROUTE } from '@/v5/ui/routes/routes.constants';
 import { Container, HomeIconBreadcrumb, Breadcrumb, InteractiveBreadcrumb, OverflowWrapper } from './breadcrumbs.styles';
 import { BreadcrumbDropdown, BreadcrumbItem } from './breadcrumbDropdown/breadcrumbDropdown.component';
 
 export interface BreadcrumbOptions {
 	options: BreadcrumbItem[];
-	secondary?: Boolean;
+	secondary?: boolean;
 }
 
 export type BreadcrumbItemOrOptions = BreadcrumbOptions | BreadcrumbItem;
@@ -60,7 +60,7 @@ export const Breadcrumbs = ({ breadcrumbs }:IProps): JSX.Element => {
 					return (
 						<div key={title}>
 							<InteractiveBreadcrumb
-								secondary={secondary}
+								$secondary={secondary}
 								onClick={handleClick(index)}
 								endIcon={<DownArrowIcon />}
 							>
@@ -78,10 +78,10 @@ export const Breadcrumbs = ({ breadcrumbs }:IProps): JSX.Element => {
 					);
 				}
 
-				const { to } = item as BreadcrumbItem;
+				const { to = '#' } = item as BreadcrumbItem;
 
 				return (
-					<Breadcrumb key={title} color="inherit" to={to}>
+					<Breadcrumb key={to} color="inherit" to={to}>
 						{title}
 					</Breadcrumb>
 				);

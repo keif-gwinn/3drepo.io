@@ -23,7 +23,10 @@ import CheckboxCheckedIcon from '@assets/icons/controls/checkbox_checked.svg';
 import CheckboxIndeterminatedIcon from '@assets/icons/controls/checkbox_indeterminated.svg';
 import { TypographyOptions } from '@mui/material/styles/createTypography';
 import ClearIcon from '@assets/icons/controls/clear_circle.svg';
-import ChevronIcon from '@assets/icons/chevron.svg';
+import ChevronIcon from '@assets/icons/outlined/chevron-outlined.svg';
+import ThinChevronIcon from '@assets/icons/outlined/thin_chevron-outlined.svg';
+import CalendarIcon from '@assets/icons/outlined/calendar-outlined.svg';
+import type {} from '@mui/x-date-pickers/themeAugmentation';
 
 export const COLOR = {
 	PRIMARY_MAIN_CONTRAST: '#FFFFFF',
@@ -48,7 +51,8 @@ export const COLOR = {
 	BASE_DARK: '#3D3E4A',
 	BASE_MID: '#565768',
 	BASE_LIGHT: '#BCBECA',
-	BASE_LIGHTEST: '#E0E5F0',
+	BASE_LIGHTER: '#C1C8D5',
+	BASE_LIGHTEST: '#D0D9EB',
 	ERROR_MAIN: '#BE4343',
 	ERROR_DARK: '#A33232',
 	ERROR_DARKEST: '#8E2A2A',
@@ -194,6 +198,7 @@ export const theme = createTheme({
 			dark: COLOR.BASE_DARK,
 			mid: COLOR.BASE_MID,
 			light: COLOR.BASE_LIGHT,
+			lighter: COLOR.BASE_LIGHTER,
 			lightest: COLOR.BASE_LIGHTEST,
 			contrastText: COLOR.BASE_LIGHTEST,
 		},
@@ -242,26 +247,55 @@ export const theme = createTheme({
 			},
 			styleOverrides: {
 				root: {
-					margin: '38px 0 0',
+					margin: '18px 0 0',
 					width: '100%',
-					'& label': {
+					label: {
 						...typography.body1,
-						top: '-35.5px',
-						left: '-13px',
+						position: 'unset',
+						transform: 'none',
 						color: COLOR.BASE_MAIN,
 
 						'&.Mui-disabled': {
 							color: COLOR.BASE_LIGHT,
+							'-webkit-text-fill-color': COLOR.BASE_LIGHT,
 						},
 
-						'&:not(.Mui-error).Mui-focused': {
-							color: COLOR.TERTIARY_MAIN,
+						'&.Mui-focused:not(.Mui-error)': {
+							color: COLOR.BASE_MAIN,
+						},
+
+						'&.Mui-error': {
+							color: COLOR.ERROR_MAIN,
+						},
+					},
+					input: {
+						// hide arrows in Chrome, Safari, Edge, Opera
+						'&::-webkit-outer-spin-button, &::-webkit-inner-spin-button': {
+							'-webkit-appearance': 'none',
+							margin: 0,
+						},
+
+						// hide arrows in Firefox
+						'&[type=number]': {
+							'-moz-appearance': 'textfield',
 						},
 					},
 					'.Mui-error': {
 						'.MuiOutlinedInput-notchedOutline': {
 							borderWidth: 1,
 						},
+						'& > textarea': {
+							color: COLOR.ERROR_MAIN,
+						},
+					},
+				},
+			},
+		},
+		MuiInputAdornment: {
+			styleOverrides: {
+				root: {
+					'&, *': {
+						color: 'currentColor',
 					},
 				},
 			},
@@ -298,8 +332,17 @@ export const theme = createTheme({
 						marginTop: 40,
 						position: 'absolute',
 						pointerEvents: 'none',
-						'& path': {
-							fill: COLOR.BASE_MAIN,
+					},
+				},
+			},
+		},
+		MuiInputBase: {
+			styleOverrides: {
+				multiline: {
+					'&&': {
+						padding: '5px 10px',
+						'& fieldset': {
+							height: '100%',
 						},
 					},
 				},
@@ -324,6 +367,59 @@ export const theme = createTheme({
 				},
 			},
 		},
+		MuiSwitch: {
+			defaultProps: {
+				disableRipple: true,
+			},
+			styleOverrides: {
+				root: {
+					width: 28,
+					height: 16,
+					padding: 0,
+					borderRadius: 8,
+					'& .MuiSwitch-switchBase': {
+						width: 16,
+						height: 16,
+						margin: 0,
+						padding: 0,
+						transitionDuration: '300ms',
+						'&:hover': {
+							backgroundColor: 'transparent',
+						},
+						'&.Mui-checked': {
+							transform: 'translateX(12px)',
+						},
+						// bg active non-checked
+						'& + .MuiSwitch-track': {
+							opacity: 1,
+							backgroundColor: COLOR.BASE_MAIN,
+						},
+						// bg active checked
+						'&.Mui-checked + .MuiSwitch-track': {
+							opacity: 1,
+							backgroundColor: COLOR.PRIMARY_MAIN,
+						},
+						'&.Mui-disabled': {
+							// bg disabled non-checked
+							'& + .MuiSwitch-track': {
+								opacity: 1,
+								backgroundColor: COLOR.BASE_LIGHT,
+							},
+							// bg disabled checked
+							'&.Mui-checked + .MuiSwitch-track': {
+								opacity: 1,
+								backgroundColor: COLOR.PRIMARY_LIGHT,
+							},
+						},
+					},
+					'& .MuiSwitch-thumb': {
+						width: 12,
+						height: 12,
+						color: COLOR.PRIMARY_MAIN_CONTRAST,
+					},
+				},
+			},
+		},
 		MuiRadio: {
 			defaultProps: {
 				color: 'primary',
@@ -336,7 +432,13 @@ export const theme = createTheme({
 					color: null,
 				},
 				colorPrimary: {
-					color: COLOR.PRIMARY_MAIN,
+					color: COLOR.BASE_LIGHT,
+					'&.Mui-checked': {
+						color: COLOR.PRIMARY_MAIN,
+					},
+					'&.Mui-disabled': {
+						color: COLOR.BASE_LIGHTEST,
+					},
 				},
 			},
 		},
@@ -361,7 +463,12 @@ export const theme = createTheme({
 					...typography.caption,
 				},
 				tooltipPlacementBottom: {
-					margin: '5px 0 !important',
+					top: -9,
+				},
+				tooltipArrow: {
+					'span::before': {
+						backgroundColor: COLOR.SECONDARY_DARK,
+					},
 				},
 			},
 		},
@@ -428,6 +535,12 @@ export const theme = createTheme({
 						padding: '6px 12px',
 						wordWrap: 'break-word',
 						boxSizing: 'border-box',
+					},
+				},
+				option: {
+					width: '100%',
+					'&:hover, &:focus': {
+						backgroundColor: COLOR.TERTIARY_LIGHTEST,
 					},
 				},
 			},
@@ -557,6 +670,13 @@ export const theme = createTheme({
 				},
 			},
 		},
+		MuiBadge: {
+			styleOverrides: {
+				root: {
+					placeItems: 'center',
+				},
+			},
+		},
 		MuiAvatar: {
 			styleOverrides: {
 				root: {
@@ -575,9 +695,16 @@ export const theme = createTheme({
 					margin: '0',
 					padding: '8px 14px',
 					width: '100%',
+					minHeight: 34,
+					boxSizing: 'border-box',
+					color: COLOR.SECONDARY_MAIN,
 
-					'&.Mui-selected, &.Mui-selected:hover': {
+					'&.Mui-selected, &.Mui-selected:hover, &:hover': {
 						backgroundColor: COLOR.TERTIARY_LIGHTEST,
+
+						'&.Mui-disabled': {
+							backgroundColor: COLOR.PRIMARY_MAIN_CONTRAST,
+						},
 					},
 				},
 			},
@@ -587,10 +714,13 @@ export const theme = createTheme({
 				root: {
 					borderRadius: 5,
 					boxShadow: SHADOW.LEVEL_5,
-				},
-				padding: {
-					paddingTop: 8,
-					paddingBottom: 8,
+					padding: '10px 0px',
+					// multiSelect
+					'&[aria-labelledby="multiselect-label"]': {
+						'.Mui-selected': {
+							background: 'transparent',
+						},
+					},
 				},
 			},
 		},
@@ -690,10 +820,6 @@ export const theme = createTheme({
 					boxShadow: 'none',
 					border: `1px solid ${COLOR.PRIMARY_MAIN_CONTRAST}`,
 					transition: 'none',
-					'& > *:first-child': {
-						height: 17,
-						width: 'auto',
-					},
 					'&:active': {
 						boxShadow: 'none',
 					},
@@ -741,47 +867,59 @@ export const theme = createTheme({
 		MuiOutlinedInput: {
 			styleOverrides: {
 				root: {
+					color: COLOR.SECONDARY_MAIN,
 					background: COLOR.PRIMARY_MAIN_CONTRAST,
-					'& input': {
+					borderRadius: 5,
+
+					input: {
 						padding: '0px 15px',
 						height: 35,
-						color: COLOR.BASE_MAIN,
-						...typography.body1,
 						lineHeight: '35px',
 					},
-					notchedOutline: {
-						borderWidth: 10,
-					},
-					[`& .MuiOutlinedInput-notchedOutline,
-					  &.Mui-disabled .MuiOutlinedInput-notchedOutline,
-					  &.Mui-disabled:hover:not(.Mui-error) .MuiOutlinedInput-notchedOutline`]: {
-						borderColor: COLOR.BASE_LIGHTEST,
-						borderRadius: 5,
-						borderWidth: 1,
-					},
-					[`&:hover:not(.Mui-error) .MuiOutlinedInput-notchedOutline, 
-					  &.Mui-focused:not(.Mui-error) .MuiOutlinedInput-notchedOutline`]: {
-						borderColor: COLOR.TERTIARY_MAIN,
-						borderWidth: 1,
-					},
-					'&.Mui-focused input': {
+					'input, textarea': {
+						...typography.body1,
 						color: COLOR.SECONDARY_MAIN,
 					},
-					'&.Mui-disabled': {
-						'& input': {
-							color: COLOR.BASE_LIGHT,
+					'.MuiInputAdornment-root': {
+						color: COLOR.BASE_MAIN,
+					},
+					'&.Mui-focused:not(.Mui-disabled) .MuiOutlinedInput-notchedOutline, .Mui-focused .MuiSelect-select': {
+						border: `1px solid ${COLOR.PRIMARY_MAIN}`,
+						borderRadius: 5,
+						boxShadow: `0 0 2px ${COLOR.PRIMARY_MAIN}`,
+					},
+					'&, &:focus, &:active, &:hover': {
+						'.MuiOutlinedInput-notchedOutline': {
+							borderRadius: 5,
+							border: `1px solid ${COLOR.BASE_LIGHTEST}`,
 						},
-						'& path': {
-							fill: COLOR.BASE_LIGHT,
+						'&.Mui-disabled .MuiOutlinedInput-notchedOutline': {
+							borderColor: COLOR.SECONDARY_LIGHTEST,
+						},
+						'&.Mui-error .MuiOutlinedInput-notchedOutline': {
+							borderColor: COLOR.ERROR_MAIN,
+						},
+					},
+					'&.Mui-disabled': {
+						borderColor: COLOR.BASE_LIGHTEST,
+						'input, textarea, .MuiInputAdornment-root svg, .MuiSelect-select, .MuiSelect-icon': {
+							color: COLOR.BASE_LIGHT,
+							'-webkit-text-fill-color': COLOR.BASE_LIGHT,
 						},
 					},
 					'&.Mui-error': {
 						backgroundColor: COLOR.ERROR_LIGHTEST,
-						'& input': {
+						color: COLOR.ERROR_MAIN,
+						'.MuiSelect-select': {
+							backgroundColor: COLOR.ERROR_LIGHTEST,
 							color: COLOR.ERROR_MAIN,
 						},
-						'& path': {
-							fill: COLOR.ERROR_MAIN,
+						'&.Mui-focused:not(.Mui-disabled) .MuiOutlinedInput-notchedOutline': {
+							borderColor: COLOR.ERROR_MAIN,
+							boxShadow: `0 0 2px ${COLOR.ERROR_MAIN}`,
+						},
+						'input, textarea, .MuiInputAdornment-root': {
+							color: COLOR.ERROR_MAIN,
 						},
 					},
 				},
@@ -793,62 +931,89 @@ export const theme = createTheme({
 						},
 					},
 				},
+				notchedOutline: {
+					height: 35,
+					bottom: 0,
+					position: 'absolute',
+					top: 'unset',
+					boxSizing: 'border-box',
+					border: `1px solid ${COLOR.BASE_LIGHTEST}`,
+					legend: {
+						display: 'none',
+					},
+				},
 			},
 		},
 		MuiSelect: {
 			defaultProps: {
-				IconComponent: ChevronIcon,
+				IconComponent: ThinChevronIcon,
 				variant: 'outlined',
 			},
 			styleOverrides: {
 				select: {
-					border: `1px solid ${COLOR.BASE_LIGHTEST}`,
 					borderRadius: 5,
-					color: COLOR.BASE_MAIN,
+					color: COLOR.SECONDARY_MAIN,
 					background: COLOR.PRIMARY_MAIN_CONTRAST,
 					lineHeight: '35px',
 					height: 35,
 					paddingTop: 0,
 					paddingBottom: 0,
-					marginTop: 38,
 					width: '100%',
 					boxSizing: 'border-box',
 					pointerEvents: 'auto',
-					'& fieldset, &:focus fieldset, &:active fieldset': {
-						border: 0,
-					},
+					borderColor: COLOR.BASE_LIGHTER,
 					'& ~ svg': {
 						position: 'absolute',
 						right: 14,
-						marginTop: 40,
+						width: 10,
+						top: '40%',
 						pointerEvents: 'none',
-						'& path': {
-							fill: COLOR.BASE_MAIN,
+						color: COLOR.BASE_MAIN,
+					},
+
+					'&.Mui-disabled': {
+						borderColor: COLOR.SECONDARY_LIGHTEST,
+						color: COLOR.BASE_LIGHT,
+						'& ~ svg': {
+							color: COLOR.BASE_LIGHT,
 						},
 					},
 				},
 			},
 		},
 		MuiInputLabel: {
+			defaultProps: {
+				shrink: false,
+			},
 			styleOverrides: {
 				root: {
 					position: 'absolute',
 					...typography.body1,
 					fontSize: '12px',
+					top: '-35.5px',
+					left: '-13px',
 					color: COLOR.BASE_MAIN,
 
-					'&:not(.Mui-error).Mui-focused': {
-						color: COLOR.TERTIARY_MAIN,
+					'&.Mui-disabled': {
+						color: COLOR.BASE_LIGHT,
 					},
 
-					'&.Mui-disabled.MuiInputLabel-asterisk': {
+					'&.Mui-focused:not(.Mui-error)': {
+						color: COLOR.BASE_MAIN,
+					},
+
+					'&.Mui-error': {
+						color: COLOR.ERROR_MAIN,
+					},
+
+					'&.Mui-disabled .MuiInputLabel-asterisk': {
 						display: 'none',
 					},
 				},
-				formControl: {
-					top: '18px',
-					left: '1px',
-				},
+			},
+		},
+		MuiFormLabel: {
+			styleOverrides: {
 				asterisk: {
 					color: COLOR.ERROR_MAIN,
 				},
@@ -857,8 +1022,13 @@ export const theme = createTheme({
 		MuiFormControl: {
 			styleOverrides: {
 				root: {
+					margin: '18px 0 0',
 					width: '100%',
 					boxSizing: 'border-box',
+					label: {
+						transform: 'none',
+						position: 'unset',
+					},
 				},
 			},
 		},
@@ -866,15 +1036,21 @@ export const theme = createTheme({
 			styleOverrides: {
 				label: {
 					color: COLOR.BASE_MAIN,
+					'&.Mui-disabled': {
+						color: COLOR.BASE_LIGHT,
+					},
 				},
 			},
 		},
 		MuiFormHelperText: {
 			styleOverrides: {
 				contained: {
-					position: 'absolute',
-					top: '35px',
-					margin: 0,
+					position: 'relative',
+					margin: '-12px 0 0',
+					bottom: -14,
+					lineHeight: '12px',
+					height: 12,
+					maxHeight: 12,
 				},
 			},
 		},
@@ -978,9 +1154,6 @@ export const theme = createTheme({
 					},
 					'&.Mui-disabled': {
 						color: COLOR.BASE_LIGHTEST,
-						'& path': {
-							fill: COLOR.BASE_LIGHTEST,
-						},
 					},
 					[`&:hover path,
 					  &:active path`]: {
@@ -1056,13 +1229,229 @@ export const theme = createTheme({
 			styleOverrides: {
 				root: {
 					textTransform: 'none',
+					whiteSpace: 'nowrap',
+					overflow: 'visible',
+				},
+			},
+		},
+		MuiAccordion: {
+			defaultProps: {
+				disableGutters: true,
+			},
+			styleOverrides: {
+				root: {
+					borderRadius: 0,
+					border: `solid 1px ${COLOR.SECONDARY_LIGHTEST}`,
+					boxShadow: 'none',
+					'&::before': {
+						height: 0,
+					},
+					'&:last-of-type': {
+						borderRadius: 0,
+					},
 				},
 			},
 		},
 		MuiAccordionSummary: {
+			defaultProps: {
+				// this messes up with existing accordion (WHY is that an accordion!???)
+				// in the viewer (issues/risks card)
+				expandIcon: createElement(ChevronIcon),
+			},
 			styleOverrides: {
+				root: {
+					margin: 0,
+					padding: '10px 13px 10px 10px',
+					color: COLOR.SECONDARY_MAIN,
+					minHeight: 'unset',
+					'& > .MuiAccordionSummary-expandIconWrapper': {
+						color: 'currentColor',
+					},
+					'&.Mui-expanded': {
+						color: COLOR.SECONDARY_MAIN,
+					},
+				},
 				content: {
-					marginBottom: 5,
+					margin: 0,
+				},
+			},
+		},
+		MuiAccordionDetails: {
+			styleOverrides: {
+				root: {
+					borderTop: `solid 1px ${COLOR.SECONDARY_LIGHTEST}`,
+					margin: 0,
+					padding: '11px 20px 24px',
+				},
+			},
+		},
+		MuiDateTimePicker: {
+			defaultProps: {
+				components: {
+					OpenPickerIcon: CalendarIcon,
+					LeftArrowIcon: ThinChevronIcon,
+					RightArrowIcon: ThinChevronIcon,
+				},
+			},
+		},
+		MuiDatePicker: {
+			defaultProps: {
+				components: {
+					OpenPickerIcon: CalendarIcon,
+					LeftArrowIcon: ThinChevronIcon,
+					RightArrowIcon: ThinChevronIcon,
+				},
+			},
+		},
+		MuiCalendarPicker: {
+			styleOverrides: {
+				root: {
+					// header section
+					'.MuiPickersCalendarHeader-root': {
+						padding: 0,
+						justifyContent: 'center',
+						color: COLOR.SECONDARY_MAIN,
+
+						// month and year
+						'& > :first-child': {
+							position: 'absolute',
+							justifyContent: 'center',
+							width: '100%',
+							'& > *': {
+								position: 'relative',
+								zIndex: 1,
+							},
+							'& button': {
+								display: 'none',
+								margin: 0,
+							},
+						},
+
+						// arrows-container
+						'& > .MuiPickersArrowSwitcher-root': {
+							position: 'absolute',
+							justifyContent: 'space-between',
+							width: '100%',
+							// actual arrows
+							button: {
+								transform: 'rotate(90deg)',
+								'&:not(:first-child)': {
+									transform: 'rotate(-90deg)',
+								},
+							},
+						},
+					},
+					// year selection
+					'.MuiYearPicker-root': {
+						button: {
+							'&:not(.Mui-disabled)': {
+								color: COLOR.SECONDARY_MAIN,
+								'&:hover': {
+									backgroundColor: COLOR.TERTIARY_LIGHTEST,
+								},
+							},
+							'&.Mui-disabled': {
+								color: COLOR.BASE_MAIN,
+								cursor: 'unset',
+							},
+							'&.Mui-selected': {
+								color: COLOR.PRIMARY_MAIN_CONTRAST,
+								'&:hover': {
+									backgroundColor: COLOR.PRIMARY_DARK,
+								},
+							},
+						},
+					},
+					'.MuiPickersCalendarHeader-root, .MuiYearPicker-root': {
+						button: {
+							'&:hover': {
+								background: 'transparent',
+							},
+							'.Mui-disabled': {
+								color: COLOR.BASE_MAIN,
+							},
+						},
+					},
+					// calendar body
+					'.MuiCalendarPicker-viewTransitionContainer': {
+						// week days (sun-sat)
+						'.MuiTypography-caption': {
+							color: COLOR.BASE_MAIN,
+						},
+						// day number (1-31)
+						'.MuiPickersDay-root': {
+							color: COLOR.SECONDARY_MAIN,
+							'&:focus': {
+								backgroundColor: 'transparent',
+								'&.Mui-selected': {
+									backgroundColor: COLOR.PRIMARY_MAIN,
+								},
+							},
+							'&:hover': {
+								backgroundColor: COLOR.TERTIARY_LIGHTEST,
+							},
+							'&.Mui-selected': {
+								color: COLOR.PRIMARY_MAIN_CONTRAST,
+								'&:hover': {
+									backgroundColor: COLOR.PRIMARY_DARK,
+								},
+							},
+							'&.Mui-disabled': {
+								color: COLOR.BASE_MAIN,
+							},
+						},
+					},
+				},
+			},
+		},
+		MuiClockPicker: {
+			styleOverrides: {
+				root: {
+					// arrows at the top
+					'.MuiClockPicker-arrowSwitcher': {
+						margin: 0,
+						'.MuiPickersArrowSwitcher-spacer': {
+							display: 'none',
+						},
+						button: {
+							margin: 0,
+							padding: 10,
+							color: COLOR.SECONDARY_MAIN,
+							transform: 'rotate(90deg)',
+							'&:not(:first-child)': {
+								transform: 'rotate(-90deg)',
+							},
+							'&:hover': {
+								backgroundColor: 'transparent',
+							},
+							'&.Mui-disabled': {
+								color: COLOR.BASE_MAIN,
+							},
+						},
+					},
+					'.MuiClock-root': {
+						// actual clock
+						'.MuiClock-clock': {
+							backgroundColor: COLOR.TERTIARY_LIGHTEST,
+							'.MuiClock-wrapper': {
+								height: '100%',
+								position: 'relative',
+								// the circle with the numbers
+								'.MuiClockNumber-root': {
+									'&:hover': {
+										backgroundColor: COLOR.PRIMARY_MAIN_CONTRAST,
+									},
+									'&.Mui-selected': {
+										color: COLOR.PRIMARY_MAIN_CONTRAST,
+									},
+								},
+							},
+						},
+						// bottom buttons (AM - PM)
+						'.MuiClock-pmButton, .MuiClock-amButton': {
+							bottom: 0,
+						},
+					},
 				},
 			},
 		},

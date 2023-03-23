@@ -21,6 +21,8 @@ import { StyledItemText, StyledListItem, CopyText } from '@/v4/routes/components
 import { Item } from '@/v4/routes/components/customTable/components/cellSelect/cellSelect.styles';
 import { Wrapper } from '@/v4/routes/components/filterPanel/components/childMenu/childMenu.styles';
 import _ from 'lodash';
+import ThinChevronIcon from '@assets/icons/outlined/thin_chevron-outlined.svg';
+import { createElement } from 'react';
 
 export const theme = createTheme(
 	_.merge(
@@ -36,6 +38,9 @@ export const theme = createTheme(
 								lineHeight: 34,
 							},
 						},
+						notchedOutline: {
+							height: '100%',
+						},
 					},
 				},
 				MuiInput: {
@@ -50,10 +55,13 @@ export const theme = createTheme(
 				MuiInputLabel: {
 					styleOverrides: {
 						root: {
-							fontSize: '13px',
+							fontSize: 10,
 							textTransform: 'lowercase',
 							':first-letter': {
 								textTransform: 'uppercase',
+							},
+							'&.Mui-focused:not(.Mui-error)': {
+								color: COLOR.BASE_MAIN,
 							},
 						},
 					},
@@ -61,24 +69,38 @@ export const theme = createTheme(
 				MuiInputBase: {
 					styleOverrides: {
 						root: {
-							'&.Mui-focused fieldset': {
-								borderWidth: '1px !important',
+							'&&': {
+								borderRadius: 5,
+							},
+							'&.Mui-focused': {
+								'.MuiSelect-select': {
+									border: `1px solid ${COLOR.PRIMARY_MAIN}`,
+									boxShadow: `0 0 2px ${COLOR.PRIMARY_MAIN}`,
+									boxSizing: 'border-box',
+								},
+								'&.Mui-error .MuiSelect-select': {
+									boxShadow: `0 0 2px ${COLOR.ERROR_MAIN}`,
+								},
+								fieldset: {
+									borderWidth: '1px !important',
+								},
 							},
 							'& input': {
 								padding: '0px 12px !important',
-							},
-							'& svg': {
-								color: COLOR.SECONDARY_MAIN,
-								'& path': {
-									fill: 'currentColor !important',
-								},
 							},
 						},
 						formControl: {
 							'&&& .MuiInputBase-input::placeholder': {
 								opacity: '1 !important',
-								color: '#C1C8D5', // TODO: fix after new palette is released
+								color: COLOR.BASE_LIGHTER,
 							},
+						},
+					},
+				},
+				MuiFormControl: {
+					styleOverrides: {
+						root: {
+							margin: 0,
 						},
 					},
 				},
@@ -86,9 +108,12 @@ export const theme = createTheme(
 					styleOverrides: {
 						root: {
 							margin: 0,
+							label: {
+								fontSize: 10,
+							},
 							'& .MuiInputBase-root input': {
 								lineHeight: 22,
-								height: 24,
+								height: 26,
 							},
 						},
 					},
@@ -96,12 +121,12 @@ export const theme = createTheme(
 				MuiSelect: {
 					styleOverrides: {
 						select: {
-							lineHeight: '22px',
-							height: '24px',
+							border: 'none',
+							lineHeight: '26px',
+							height: 26,
 							padding: '0 10px',
-							marginTop: '18px',
-							left: '-14px',
-							color: `${COLOR.SECONDARY_MAIN} !important`,
+							marginTop: 0,
+							color: COLOR.SECONDARY_MAIN,
 
 							'& ~ svg': {
 								right: 10,
@@ -136,6 +161,10 @@ export const theme = createTheme(
 							},
 							'&.color-picker__panel': { // Colour picker modal
 								'.MuiInput-root': {
+									'&.Mui-focused': {
+										border: `1px solid ${COLOR.PRIMARY_MAIN}`,
+										boxShadow: `0 0 2px ${COLOR.PRIMARY_MAIN}`,
+									},
 									border: `1px solid ${COLOR.BASE_LIGHTEST}`,
 									borderRadius: 5,
 									padding: '0 7px',
@@ -170,7 +199,7 @@ export const theme = createTheme(
 						root: {
 							height: '32 !important',
 							width: '32 !important',
-							border: 'none !important',
+							border: 'none',
 							margin: '0 !important',
 							alignSelf: 'flex-start',
 						},
@@ -230,7 +259,6 @@ export const theme = createTheme(
 							boxShadow: `0px 9px 28px 8px rgb(0 0 0 / 5%),
 										0px 6px 16px 0px rgb(0 0 0 / 8%),
 										0px 3px 6px -4px rgb(0 0 0 / 12%) !important`,
-							padding: '4px 0',
 							'.MuiList-root': {
 								paddingTop: 0,
 								paddingBottom: 0,
@@ -288,6 +316,13 @@ export const theme = createTheme(
 								color: COLOR.SECONDARY_MAIN,
 								fontSize: '0.75rem',
 							},
+							// multiSelect
+							'&[aria-labelledby="multiselect-label"]': {
+								'.MuiMenuItem-root': {
+									padding: 0,
+									minHeight: 34,
+								},
+							},
 						},
 					},
 				},
@@ -298,6 +333,11 @@ export const theme = createTheme(
 								color: `${COLOR.BASE_MAIN} !important`,
 							},
 						},
+					},
+				},
+				MuiTooltip: {
+					defaultProps: {
+						disableInteractive: true,
 					},
 				},
 				MuiDialog: {
@@ -337,6 +377,13 @@ export const theme = createTheme(
 								margin: 0,
 							},
 						},
+					},
+				},
+				MuiAccordionSummary: {
+					defaultProps: {
+						// this messes up with existing accordion (WHY is that an accordion!???)
+						// in the viewer (issues/risks card)
+						expandIcon: createElement(ThinChevronIcon),
 					},
 				},
 			},

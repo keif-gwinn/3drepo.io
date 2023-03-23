@@ -15,11 +15,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var hostname   = "127.0.0.1";
-var http_port  = 8080;
-var https_port = 443;
+const hostname   = "127.0.0.1";
+const http_port  = 8080;
+const https_port = 443;
 
-var tmpDir = require("os").tmpdir();
+const tmpDir = require("os").tmpdir();
+const {mkdirSync} = require("fs");
+const Path = require("path");
+const fileSharePath = Path.join(tmpDir, "v5FileShare");
+try {
+	mkdirSync(fileSharePath);
+} catch(err) {
+	if(err.code !== "EEXIST") throw err;
+}
+
 
 module.exports = {
 	host: hostname,
@@ -81,7 +90,7 @@ module.exports = {
 		bucketName: "3drepo-travis"
 	},
 	fs: {
-		path: tmpDir,
+		path: fileSharePath,
 		levels: 2
 	},
 	defaultStorage: "fs",
@@ -161,10 +170,18 @@ module.exports = {
 		    host: 'smtp.ethereal.email',
 		    port: 587,
     		auth: {
-	    	    user: 'delaney.koch69@ethereal.email',
-	    	    pass: '1GxDbgfgQEygb2Ts7W'
+	            user: 'scottie17@ethereal.email',
+		        pass: 'hEzMEnr47CP6xKWvJj'
 		    }
 		},
 		sender: '"3D Repo" <dummyEmail@3drepo.org>'
 	},
+
+	sso: {
+		aad: {
+			clientId: "abc",
+			authority: "https://login.microsoftonline.com/common",
+			clientSecret: "xyz"
+		}
+	}
 }

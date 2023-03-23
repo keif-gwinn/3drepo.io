@@ -16,21 +16,17 @@
  */
 import { DetailedHTMLProps, FormHTMLAttributes } from 'react';
 import { Button, Dialog } from '@mui/material';
-import CloseIcon from '@assets/icons/close.svg';
 import { DialogProps } from '@mui/material/Dialog';
 import { FormattedMessage } from 'react-intl';
 import { ScrollArea } from '@controls/scrollArea';
 import {
 	Form,
-	Title,
-	Header,
-	CloseButton,
 	FormDialogContent,
 	FormDialogActions,
 	RemoveWhiteCorners,
-	Subtitle,
 	SubmitButton,
 } from './formDialog.styles';
+import { FormModalHeader } from './formModalHeader/formModalHeader.component';
 
 export interface IFormModal extends Omit<DetailedHTMLProps<FormHTMLAttributes<HTMLFormElement>, HTMLFormElement>, 'ref'> {
 	onClickClose?: () => void;
@@ -47,6 +43,7 @@ export interface IFormModal extends Omit<DetailedHTMLProps<FormHTMLAttributes<HT
 	isSubmitting?: boolean;
 	disableClosing?: boolean;
 	hideSubmitButton?: boolean;
+	hideHorizontalScroll?: boolean;
 }
 
 export const FormModal = (props: IFormModal) => {
@@ -67,6 +64,7 @@ export const FormModal = (props: IFormModal) => {
 		isSubmitting = false,
 		disableClosing = false,
 		hideSubmitButton = false,
+		hideHorizontalScroll = true,
 		...formProps
 	} = props;
 
@@ -85,18 +83,13 @@ export const FormModal = (props: IFormModal) => {
 			fullWidth={!!maxWidth}
 		>
 			<Form {...formProps}>
-				<Header>
-					<div>
-						<Title>
-							{title}
-						</Title>
-						{subtitle && <Subtitle>{subtitle}</Subtitle>}
-					</div>
-					<CloseButton aria-label="Close dialog" onClick={handleClose} disabled={disableClosing}>
-						<CloseIcon />
-					</CloseButton>
-				</Header>
-				<ScrollArea variant="base" autoHeightMax="70vh" autoHeight>
+				<FormModalHeader
+					title={title}
+					subtitle={subtitle}
+					handleClose={handleClose}
+					disableClosing={disableClosing}
+				/>
+				<ScrollArea variant="base" autoHeightMax="70vh" autoHeight hideHorizontal={hideHorizontalScroll}>
 					<FormDialogContent>
 						{children}
 					</FormDialogContent>

@@ -16,29 +16,22 @@
  */
 
 import { createSelector } from 'reselect';
-import { isEmpty } from 'lodash';
 import { selectCurrentProject } from '@/v5/store/projects/projects.selectors';
 import { IContainersState } from './containers.redux';
 import { IContainer } from './containers.types';
+import { Role } from '../currentUser/currentUser.types';
+import { isCollaboratorRole, isCommenterRole } from '../store.helpers';
 
-const selectContainersDomain = (state): IContainersState => state.containers;
+const selectContainersDomain = (state): IContainersState => state?.containers || ({ containersByProject: {} });
 
 export const selectContainers = createSelector(
 	selectContainersDomain, selectCurrentProject,
-	(state, currentProject) => state.containersByProject[currentProject] ?? [],
+	(state, currentProject) => state?.containersByProject[currentProject] ?? [],
 );
 
 export const selectFavouriteContainers = createSelector(
 	selectContainers,
 	(containers) => containers.filter(({ isFavourite }) => isFavourite),
-);
-
-export const selectHasContainers = createSelector(
-	selectContainers, selectFavouriteContainers,
-	(containers, favouriteContainers) => ({
-		favourites: !isEmpty(favouriteContainers),
-		all: !isEmpty(containers),
-	}),
 );
 
 export const selectIsListPending = createSelector(
@@ -55,5 +48,25 @@ export const selectAreStatsPending = createSelector(
 export const selectContainerById = createSelector(
 	selectContainers,
 	(_, id) => id,
-	(containers, id): IContainer | null => containers.find((federation) => (federation._id === id)),
+	(containers, id): IContainer | null => containers.find((container) => (container._id === id)),
+);
+
+export const selectContainerRole = createSelector(
+	selectContainerById,
+	(container): Role | null => container?.role || null,
+);
+
+export const selectHasCollaboratorAccess = createSelector(
+	selectContainerRole,
+	(role): boolean => isCollaboratorRole(role),
+);
+
+export const selectHasCommenterAccess = createSelector(
+	selectContainerRole,
+	(role): boolean => isCommenterRole(role),
+);
+
+export const selectCanUploadToProject = createSelector(
+	selectContainers,
+	(containers): boolean => containers.some(({ role }) => isCollaboratorRole(role)),
 );

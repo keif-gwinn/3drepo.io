@@ -1,5 +1,5 @@
 ARG REBUILD_DATE=unknown
-FROM node:14 as builder
+FROM node:18 as builder
 COPY . /home/node/3drepo.io
 RUN cd /home/node/3drepo.io/backend && \
         yarn install --network-timeout 100000 && \
@@ -7,10 +7,11 @@ RUN cd /home/node/3drepo.io/backend && \
         yarn install --network-timeout 100000 && \ 
         yarn build
 
-FROM node:14 as deploy
+FROM node:18 as deploy
 
 RUN apt-get update && apt-get install -y \
         gosu \
+        less \
         && rm -rf /var/lib/apt/lists/*
 
 ARG NODE_USERNAME=node
@@ -41,6 +42,8 @@ ENV NODE_CONFIG_DIR='./config'
 EXPOSE 8080 3000
 
 COPY .azure/Docker/src/init.sh /usr/local/bin/start.sh
+COPY .azure/Docker/src/getCustomLogins.py /usr/local/bin/getCustomLogins.py
+
 RUN chmod +x /usr/local/bin/start.sh ; ln -s /usr/local/bin/start.sh /usr/local/bin/start
 
 WORKDIR /home/node/3drepo.io/

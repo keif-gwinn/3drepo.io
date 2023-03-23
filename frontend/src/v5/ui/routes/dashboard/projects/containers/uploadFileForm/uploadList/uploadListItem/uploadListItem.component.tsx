@@ -15,16 +15,16 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { useEffect } from 'react';
-import DeleteIcon from '@assets/icons/delete.svg';
-import EditIcon from '@assets/icons/edit.svg';
+import { useEffect, useState } from 'react';
+import DeleteIcon from '@assets/icons/outlined/delete-outlined.svg';
+import EditIcon from '@assets/icons/outlined/edit-outlined.svg';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { IContainer, UploadItemFields } from '@/v5/store/containers/containers.types';
 import filesize from 'filesize';
 import { filesizeTooLarge } from '@/v5/store/containers/containers.helpers';
 import { ListItemSchema } from '@/v5/validation/containerAndFederationSchemes/containerSchemes';
-import { RevisionsHooksSelectors } from '@/v5/services/selectorsHooks/revisionsSelectors.hooks';
+import { RevisionsHooksSelectors, FederationsHooksSelectors } from '@/v5/services/selectorsHooks';
 import { UploadListItemFileIcon } from './components/uploadListItemFileIcon/uploadListItemFileIcon.component';
 import { UploadListItemRow } from './components/uploadListItemRow/uploadListItemRow.component';
 import { UploadListItemTitle } from './components/uploadListItemTitle/uploadListItemTitle.component';
@@ -53,10 +53,21 @@ export const UploadListItem = ({
 	isUploading,
 	onChange,
 }: IUploadListItem): JSX.Element => {
-	const { control, formState: { errors }, setValue, trigger, watch, setError } = useForm<UploadItemFields>({
+	const federationsNames = FederationsHooksSelectors.selectFederations().map(({ name }) => name);
+	const [containersNamesInUse, setContainersNamesInUse] = useState([]);
+	const {
+		control,
+		formState: { errors },
+		getValues,
+		setValue,
+		trigger,
+		watch,
+		setError,
+	} = useForm<UploadItemFields>({
 		defaultValues,
 		mode: 'onChange',
 		resolver: yupResolver(ListItemSchema),
+		context: { alreadyExistingNames: containersNamesInUse.concat(federationsNames) },
 	});
 
 	const uploadErrorMessage: string = RevisionsHooksSelectors.selectUploadError(item.uploadId);
@@ -67,18 +78,19 @@ export const UploadListItem = ({
 			containerId: value._id,
 			containerName: value.name,
 			containerCode: value.code,
-			containerType: value.type,
-			containerUnit: value.unit,
+			containerType: value.type || 'Uncategorised',
+			containerUnit: value.unit || 'mm',
 			containerDesc: value.desc,
 		};
 		Object.keys(conversion).forEach((key: any) => {
-			if (conversion[key] || key === 'containerName') {
-				setValue(key, conversion[key]);
-				updateValue(key);
-			}
+			setValue(key, conversion[key]);
+			updateValue(key);
 		});
-		trigger('containerName');
 	};
+
+	useEffect(() => {
+		if (getValues('containerName')) trigger('containerName');
+	}, [watch('containerName')]);
 
 	useEffect(() => {
 		trigger('revisionTag');
@@ -103,9 +115,12 @@ export const UploadListItem = ({
 			/>
 			<Destination
 				disabled={isUploading}
-				errorMessage={errors.containerName?.message}
+				errors={errors}
+				control={control}
 				defaultValue={defaultValues.containerName}
-				onChange={onDestinationChange}
+				onValueChange={onDestinationChange}
+				containersNamesInUse={containersNamesInUse}
+				setContainersNamesInUse={setContainersNamesInUse}
 			/>
 			<RevisionTag
 				control={control}
@@ -113,14 +128,14 @@ export const UploadListItem = ({
 				isSelected={isSelected}
 				errorMessage={errors.revisionTag?.message}
 			/>
-			{ isUploading
+			{isUploading
 				? <UploadProgress uploadId={item.uploadId} errorMessage={uploadErrorMessage} />
 				: (
 					<>
-						<Button $selectedrow={isSelected} onClick={onClickEdit}>
+						<Button variant={isSelected ? 'secondary' : 'primary'} onClick={onClickEdit}>
 							<EditIcon />
 						</Button>
-						<Button $selectedrow={isSelected} onClick={onClickDelete}>
+						<Button variant={isSelected ? 'secondary' : 'primary'} onClick={onClickDelete}>
 							<DeleteIcon />
 						</Button>
 					</>

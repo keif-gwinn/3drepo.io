@@ -19,16 +19,15 @@ import { formatMessage } from '@/v5/services/intl';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { FormModal } from '@controls/modal/formModal/formDialog.component';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { ProjectsActionsDispatchers } from '@/v5/services/actionsDispatchers/projectsActions.dispatchers';
+import { ProjectsActionsDispatchers } from '@/v5/services/actionsDispatchers';
 import { CreateProjectSchema } from '@/v5/validation/projectSchemes/projectsSchemes';
-import { FormTextField } from '@controls/formTextField/formTextField.component';
-import { FormSelect } from '@controls/formSelect/formSelect.component';
 import { MenuItem } from '@mui/material';
-import { TeamspacesHooksSelectors } from '@/v5/services/selectorsHooks/teamspacesSelectors.hooks';
+import { TeamspacesHooksSelectors } from '@/v5/services/selectorsHooks';
 import { projectAlreadyExists } from '@/v5/validation/errors.helpers';
-import { UnhandledError } from '@controls/errorMessage/unhandledError/unhandledError.component';
+import { UnhandledErrorInterceptor } from '@controls/errorMessage/unhandledErrorInterceptor/unhandledErrorInterceptor.component';
+import { FormSelect, FormTextField } from '@controls/inputs/formInputs.component';
 
-interface ICreateProject {
+interface CreateProjectModalProps {
 	open: boolean;
 	onClickClose: () => void;
 }
@@ -38,12 +37,13 @@ interface IFormInput {
 	teamspace: string;
 }
 
-export const CreateProjectForm = ({ open, onClickClose }: ICreateProject) => {
+export const CreateProjectModal = ({ open, onClickClose }: CreateProjectModalProps) => {
 	const teamspaces = TeamspacesHooksSelectors.selectTeamspaces();
 	const currentTeamspace = TeamspacesHooksSelectors.selectCurrentTeamspace();
-
 	const [existingProjectsByTeamspace, setExistingProjectsByTeamspace] = useState({});
 	const [isSubmitting, setIsSubmitting] = useState(false);
+
+	const filteredTeamspaces = teamspaces.filter((ts) => ts.isAdmin);
 
 	const DEFAULT_VALUES = {
 		teamspace: currentTeamspace,
@@ -53,20 +53,21 @@ export const CreateProjectForm = ({ open, onClickClose }: ICreateProject) => {
 	const {
 		control,
 		formState,
-		formState: { errors },
-		reset,
+		formState: { errors, touchedFields },
+		watch,
 		handleSubmit,
 		getValues,
 		trigger,
 	} = useForm<IFormInput>({
 		mode: 'onChange',
-		resolver: yupResolver(CreateProjectSchema(existingProjectsByTeamspace)),
+		resolver: yupResolver(CreateProjectSchema),
+		context: { existingProjectsByTeamspace },
 		defaultValues: DEFAULT_VALUES,
 	});
 
 	const onSubmissionError = (error) => {
 		if (projectAlreadyExists(error)) {
-			const { projectName, teamspace } = getValues();
+			const { teamspace, projectName } = getValues();
 			setExistingProjectsByTeamspace({
 				...existingProjectsByTeamspace,
 				[teamspace]: [
@@ -77,29 +78,29 @@ export const CreateProjectForm = ({ open, onClickClose }: ICreateProject) => {
 		}
 	};
 
-	const onSubmit: SubmitHandler<IFormInput> = () => {
-		setIsSubmitting(true);
-		const { teamspace, projectName } = getValues();
+	const onSubmit: SubmitHandler<IFormInput> = ({ teamspace, projectName }) => {
 		ProjectsActionsDispatchers.createProject(teamspace, projectName.trim(), onClickClose, onSubmissionError);
 		setIsSubmitting(false);
 	};
 
 	useEffect(() => {
-		reset(DEFAULT_VALUES);
-		setExistingProjectsByTeamspace({});
-	}, [open]);
-
-	useEffect(() => {
 		if (Object.keys(existingProjectsByTeamspace).length) trigger('projectName');
 	}, [errors, JSON.stringify(existingProjectsByTeamspace)]);
 
+	useEffect(() => {
+		ProjectsActionsDispatchers.fetch(getValues('teamspace'));
+		if (touchedFields.projectName) {
+			trigger('projectName');
+		}
+	}, [watch('teamspace')]);
+
 	return (
 		<FormModal
-			title={formatMessage({ id: 'projects.creation.title', defaultMessage: 'Create new Project' })}
+			title={formatMessage({ id: 'project.creation.form.title', defaultMessage: 'Create new Project' })}
 			open={open}
 			onClickClose={onClickClose}
 			onSubmit={handleSubmit(onSubmit)}
-			confirmLabel={formatMessage({ id: 'projects.creation.ok', defaultMessage: 'Create Project' })}
+			confirmLabel={formatMessage({ id: 'project.creation.form.createButton', defaultMessage: 'Create Project' })}
 			isValid={formState.isValid}
 			isSubmitting={isSubmitting}
 			maxWidth="sm"
@@ -107,10 +108,10 @@ export const CreateProjectForm = ({ open, onClickClose }: ICreateProject) => {
 			<FormSelect
 				required
 				name="teamspace"
-				label={formatMessage({ id: 'projects.creation.form.teamspace', defaultMessage: 'Teamspace' })}
+				label={formatMessage({ id: 'project.creation.form.teamspace', defaultMessage: 'Teamspace' })}
 				control={control}
 			>
-				{teamspaces.map((ts) => (
+				{filteredTeamspaces.map((ts) => (
 					<MenuItem key={ts.name} value={ts.name}>
 						{ts.name}
 					</MenuItem>
@@ -119,11 +120,11 @@ export const CreateProjectForm = ({ open, onClickClose }: ICreateProject) => {
 			<FormTextField
 				required
 				name="projectName"
-				label={formatMessage({ id: 'projects.creation.form.name', defaultMessage: 'Project name' })}
+				label={formatMessage({ id: 'project.creation.form.name', defaultMessage: 'Project name' })}
 				control={control}
 				formError={errors.projectName}
 			/>
-			<UnhandledError expectedErrorValidators={[projectAlreadyExists]} />
+			<UnhandledErrorInterceptor expectedErrorValidators={[projectAlreadyExists]} />
 		</FormModal>
 	);
 };

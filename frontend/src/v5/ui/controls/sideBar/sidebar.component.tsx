@@ -15,12 +15,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import ExpandIcon from '@assets/icons/expand_panel.svg';
-import { Container, Content, Button } from './sidebar.styles';
+import ExpandIcon from '@assets/icons/outlined/expand_panel-outlined.svg';
+import { SidebarContainer, ExpandButton, SidebarContent } from './sidebar.styles';
 
 interface ISidebar {
 	open: boolean;
-	noButton?: boolean;
 	onClick: () => void;
 	className?: string;
 	children: JSX.Element;
@@ -31,18 +30,15 @@ export const Sidebar = ({
 	className,
 	open,
 	onClick,
-	noButton = false,
 	hidden = false,
 	children,
 }: ISidebar): JSX.Element => (
-	<Container className={className} open={open} hidden={hidden}>
-		{!noButton && (
-			<Button onClick={onClick} variant="main">
-				<ExpandIcon />
-			</Button>
-		)}
-		<Content>
+	<SidebarContainer className={className} open={open} hidden={hidden}>
+		<ExpandButton onClick={onClick}>
+			<ExpandIcon />
+		</ExpandButton>
+		<SidebarContent>
 			{children}
-		</Content>
-	</Container>
+		</SidebarContent>
+	</SidebarContainer>
 );

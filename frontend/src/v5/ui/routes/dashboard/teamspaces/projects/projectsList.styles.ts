@@ -18,19 +18,7 @@ import styled from 'styled-components';
 import { Typography } from '@mui/material';
 import { CardListItem } from '@components/shared/linkCard/linkCard.styles';
 import { Button } from '@controls/button';
-import { SearchInput as SearchInputBase } from '@controls/searchInput';
-
-export const Container = styled.div`
-	background-color: ${({ theme }) => theme.palette.primary.contrast};
-	width: calc(100% - 150px);
-	flex-direction: column;
-	display: flex;
-	justify-content: flex-start;
-	padding: 9px 30px 41px;
-	margin: 32px 75px;
-	border-radius: 10px;
-	box-sizing: border-box;
-`;
+import { SearchInput as SearchInputBase } from '@controls/search/searchInput';
 
 export const Header = styled.div`
 	display: flex;
@@ -38,12 +26,15 @@ export const Header = styled.div`
 	justify-content: space-between;
 	align-items: center;
 	width: 100%;
+	min-height: 51px;
 	margin-bottom: 16px;
 `;
 
 export const Title = styled(Typography).attrs({
 	variant: 'h2',
-})``;
+})`
+	color: ${({ theme }) => theme.palette.secondary.main};
+`;
 
 export const ActionComponents = styled.div`
 	display: flex;

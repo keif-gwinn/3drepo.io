@@ -77,6 +77,11 @@ Models.getModelByQuery = async (ts, query, projection) => {
 
 Models.getModelById = (ts, model, projection) => Models.getModelByQuery(ts, { _id: model }, projection);
 
+Models.isFederation = async (ts, model) => {
+	const { federate } = await Models.getModelById(ts, model, { _id: 0, federate: 1 });
+	return federate;
+};
+
 Models.getContainerById = async (ts, container, projection) => {
 	try {
 		return await Models.getModelByQuery(ts, { _id: container, ...noFederations }, projection);
@@ -151,8 +156,8 @@ Models.newRevisionProcessed = async (teamspace, project, model, corId, retVal, u
 		set.errorReason = { message, timestamp: new Date(), errorCode: retVal };
 	}
 
-	const { matchedCount } = await updateOneModel(teamspace, query, { $set: set, $unset: unset });
-	if (matchedCount > 0) {
+	const updated = await updateOneModel(teamspace, query, { $set: set, $unset: unset });
+	if (updated) {
 	// It's possible that the model was deleted whilst there's a process in the queue. In that case we don't want to
 	// trigger notifications.
 

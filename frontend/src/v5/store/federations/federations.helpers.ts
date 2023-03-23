@@ -25,12 +25,9 @@ import {
 } from '@/v5/store/federations/federations.types';
 import { UploadStatuses } from '@/v5/store/containers/containers.types';
 import { getNullableDate } from '@/v5/helpers/getNullableDate';
+import { Role } from '../currentUser/currentUser.types';
 
-export const filterFederations = (federations: IFederation[], filterQuery: string) => (
-	federations.filter((
-		{ name, code, category },
-	) => [name, code, category].join('').toLowerCase().includes(filterQuery.trim().toLowerCase()))
-);
+export const FEDERATION_SEARCH_FIELDS = ['code', 'name', 'desc', 'category'];
 
 export const prepareNewFederation = (
 	newFederation: NewFederation,
@@ -46,7 +43,7 @@ export const prepareNewFederation = (
 		lastUpdated: new Date(),
 		category: '',
 		hasStatsPending: false,
-		role: '',
+		role: Role.NONE,
 		isFavourite: false,
 	}
 );

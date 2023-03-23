@@ -19,7 +19,7 @@ import Check from '@mui/icons-material/Check';
 import TreeIcon from '@mui/icons-material/DeviceHub';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList as List } from 'react-window';
-import { ViewerScrollArea } from '@/v5/ui/v4Adapter/components/viewerScrollArea.component';
+import { ConditionalV5OrViewerScrollArea } from '@/v5/ui/v4Adapter/components/conditionalV5OrViewerScrollArea.component';
 
 import { TREE_ACTIONS_ITEMS, TREE_ACTIONS_MENU, TREE_ITEM_SIZE } from '../../../../constants/tree';
 import { VIEWER_PANELS } from '../../../../constants/viewerGui';
@@ -69,14 +69,14 @@ const CustomScrollArea = ({ forwardedRef, style, children, onScroll }) => {
 	const refSetter = useCallback(scrollbarRef => forwardedRef(scrollbarRef?.view || null), [forwardedRef]);
 
 	return (
-		<ViewerScrollArea
+		<ConditionalV5OrViewerScrollArea
 			ref={refSetter}
 			style={{ ...style, overflow: "hidden" }}
 			autoHide
 			onScroll={onScroll}
 		>
 			{children}
-		</ViewerScrollArea>
+		</ConditionalV5OrViewerScrollArea>
 	);
 };
 
@@ -249,20 +249,19 @@ export class Tree extends PureComponent<IProps, IState> {
 		const { expandedNodesMap, activeNode } = this.props;
 		const treeNode = data[index];
 
-		return (
-			<TreeNode
-				index={index}
-				style={style}
-				key={treeNode._id}
-				data={treeNode}
-				hasFederationRoot={this.isFederation}
-				isSearchResult={treeNode.isSearchResult}
-				active={activeNode === treeNode._id}
-				expanded={expandedNodesMap[treeNode._id]}
-				onScrollToTop={this.handleScrollToTop}
-				onClick={this.handleNodesClick}
-			/>
-		);
+		const treeNodeProps = {
+			index,
+			style,
+			key: treeNode._id,
+			data: treeNode,
+			hasFederationRoot: this.isFederation,
+			isSearchResult: treeNode.isSearchResult,
+			active: activeNode === treeNode._id,
+			expanded: expandedNodesMap[treeNode._id],
+			onScrollToTop: this.handleScrollToTop,
+			onClick: this.handleNodesClick,
+		}
+		return (<TreeNode {...treeNodeProps} />);
 	}
 
 	private renderCheckIcon = renderWhenTrue(() => <Check fontSize="small" />);

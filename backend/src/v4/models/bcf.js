@@ -598,7 +598,7 @@ function parseMarkupBuffer(markupBuffer) {
 		_.get(xml, "Markup.Comment") && xml.Markup.Comment.forEach(comment => {
 			const obj = addPreExistingComment(
 				_.get(comment, "Author[0]._"),
-				_.get(comment, "Comment[0]._"),
+				_.get(comment, "Comment[0]._") ?? "",
 				{ guid: utils.stringToUUID(_.get(comment, "Viewpoint[0].@.Guid"))},
 				utils.stringToUUID(_.get(comment, "@.Guid")),
 				utils.isoStringToTimestamp(_.get(comment, "Date[0]._"))
@@ -715,7 +715,7 @@ async function parseViewpointComponents(groupDbCol, vpComponents, isFederation, 
 									parseViewpointComponentIfc(groupDbCol.model, component, ifcToModelMap, isFederation)
 								);
 							}
-							if (vpComponents[componentsIdx][componentType][i].Exceptions) {
+							if (vpComponents[componentsIdx][componentType][i].Exceptions?.Component) {
 								exceptionIfcs = vpComponents[componentsIdx][componentType][i].Exceptions[0].Component.map(component =>
 									parseViewpointComponentIfc(groupDbCol.model, component, ifcToModelMap, isFederation)
 								);
@@ -1002,7 +1002,7 @@ bcf.importBCF = function(requester, account, model, dataBuffer, settings) {
 
 	if (settings.federate) {
 		for (let i = 0; settings.subModels && i < settings.subModels.length; i++) {
-			const subModelId = settings.subModels[i].model;
+			const subModelId = settings.subModels[i];
 			ifcToModelMapPromises.push(
 				Meta.getIfcGuids(account, subModelId).then(ifcGuidResults => {
 					for (let j = 0; j < ifcGuidResults.length; j++) {

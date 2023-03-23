@@ -123,6 +123,17 @@ const testTimestamp = () => {
 	});
 };
 
+const testEmbeddedImage = () => {
+	describe.each([
+		[null, true, true],
+		[null, false, false],
+	])('Image validator', (data, isNullable, res) => {
+		test(`${data} characters should return ${res}`, async () => {
+			await expect(YupHelper.types.embeddedImage(isNullable).isValid(data)).resolves.toBe(res);
+		});
+	});
+};
+
 describe('utils/helper/yup', () => {
 	testId();
 	testColorArr();
@@ -131,4 +142,5 @@ describe('utils/helper/yup', () => {
 	testShortDesc();
 	testLongDesc();
 	testTimestamp();
+	testEmbeddedImage();
 });

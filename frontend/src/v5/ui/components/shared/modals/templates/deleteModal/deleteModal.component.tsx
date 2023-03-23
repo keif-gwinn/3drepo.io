@@ -15,7 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 import { Button, DialogContentText, DialogTitle } from '@mui/material';
-import DeleteIcon from '@assets/icons/delete.svg';
+import DeleteIcon from '@assets/icons/outlined/delete-outlined.svg';
 import { FormattedMessage } from 'react-intl';
 import {
 	DialogContainer,
@@ -29,7 +29,7 @@ import {
 } from '@/v5/ui/components/shared/modals/modals.styles';
 import { CircledIcon } from '@controls/circledIcon';
 import { useForm } from 'react-hook-form';
-import { UnhandledError } from './deleteModal.styles';
+import { UnhandledErrorInterceptor } from './deleteModal.styles';
 
 interface IDeleteModal {
 	onClickClose?: () => void,
@@ -37,9 +37,19 @@ interface IDeleteModal {
 	name: string,
 	message?: string,
 	confidenceCheck?: boolean,
+	titleLabel?: string,
+	confirmLabel?: string,
 }
 
-export const DeleteModal = ({ onClickConfirm, onClickClose, name, message, confidenceCheck }: IDeleteModal) => {
+export const DeleteModal = ({
+	onClickConfirm,
+	onClickClose,
+	name,
+	message,
+	confidenceCheck,
+	titleLabel,
+	confirmLabel,
+}: IDeleteModal) => {
 	const { control, watch, handleSubmit } = useForm({
 		mode: 'onChange',
 		defaultValues: { retypedName: '' },
@@ -62,11 +72,13 @@ export const DeleteModal = ({ onClickConfirm, onClickClose, name, message, confi
 			</CircledIcon>
 			<DialogTitle>
 				<TruncatableTitle>
-					<FormattedMessage
-						id="deleteModal.header"
-						defaultMessage="Delete {name}?"
-						values={{ name }}
-					/>
+					{titleLabel || (
+						<FormattedMessage
+							id="deleteModal.header"
+							defaultMessage="Delete {name}?"
+							values={{ name }}
+						/>
+					)}
 				</TruncatableTitle>
 			</DialogTitle>
 			<Message>
@@ -90,7 +102,7 @@ export const DeleteModal = ({ onClickConfirm, onClickClose, name, message, confi
 						/>
 					</RetypeCheck>
 				)}
-				<UnhandledError />
+				<UnhandledErrorInterceptor />
 			</Message>
 			<Actions>
 				<Button onClick={onClickClose} variant="contained" color="primary">
@@ -100,10 +112,12 @@ export const DeleteModal = ({ onClickConfirm, onClickClose, name, message, confi
 					/>
 				</Button>
 				<Button autoFocus type="submit" onClick={handleSubmit(onSubmit)} variant="outlined" color="secondary" disabled={!isValid}>
-					<FormattedMessage
-						id="deleteModal.action.confirm"
-						defaultMessage="Delete"
-					/>
+					{ confirmLabel || (
+						<FormattedMessage
+							id="deleteModal.action.confirm"
+							defaultMessage="Delete"
+						/>
+					)}
 				</Button>
 			</Actions>
 		</DialogContainer>

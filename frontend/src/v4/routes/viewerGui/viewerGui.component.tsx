@@ -15,11 +15,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { Tickets } from '@/v5/ui/routes/viewer/tickets/tickets.component';
 import { isEmpty } from 'lodash';
 import { PureComponent } from 'react';
 
 import { VIEWER_EVENTS } from '../../constants/viewer';
-import { VIEWER_LEFT_PANELS, VIEWER_PANELS } from '../../constants/viewerGui';
+import { getViewerLeftPanels, VIEWER_PANELS } from '../../constants/viewerGui';
 import { getWindowHeight, getWindowWidth, renderWhenTrue } from '../../helpers/rendering';
 import { MultiSelect } from '../../services/viewer/multiSelect';
 import { Activities } from './components/activities/';
@@ -56,6 +57,7 @@ interface IProps {
 		params: {
 			model: string;
 			teamspace: string;
+			project?: string;
 			revision?: string;
 		}
 	};
@@ -84,6 +86,7 @@ interface IProps {
 	unsubscribeOnIssueChanges: (teamspace, modelId) => void;
 	subscribeOnRiskChanges: (teamspace, modelId) => void;
 	unsubscribeOnRiskChanges: (teamspace, modelId) => void;
+	setProjectionModeSuccess: (mode) => void;
 }
 
 interface IState {
@@ -144,6 +147,7 @@ export class ViewerGui extends PureComponent<IProps, IState> {
 		}
 
 		fetchTeamspaces(currentTeamspace);
+		this.props.viewer.on(VIEWER_EVENTS.CAMERA_PROJECTION_SET, this.props.setProjectionModeSuccess);
 	}
 
 	public componentDidUpdate(prevProps: IProps, prevState: IState) {
@@ -164,6 +168,7 @@ export class ViewerGui extends PureComponent<IProps, IState> {
 		}
 
 		if (teamspaceChanged || modelChanged || revisionChanged) {
+			this.props.resetPanelsStates();
 			this.props.unsubscribeOnIssueChanges(prevProps.match.params.teamspace, prevProps.match.params.model);
 			this.props.unsubscribeOnRiskChanges(prevProps.match.params.teamspace, prevProps.match.params.model);
 			this.props.fetchData(params.teamspace, params.model);
@@ -231,7 +236,7 @@ export class ViewerGui extends PureComponent<IProps, IState> {
 
 	private renderLeftPanelsButtons = () => (
 		<LeftPanelsButtons>
-			{VIEWER_LEFT_PANELS.map(({ name, type }) => (
+			{getViewerLeftPanels().map(({ name, type }) => (
 				<PanelButton
 					key={type}
 					onClick={this.handleTogglePanel}
@@ -248,6 +253,7 @@ export class ViewerGui extends PureComponent<IProps, IState> {
 	private panelsMap = {
 		[VIEWER_PANELS.ISSUES]: Issues,
 		[VIEWER_PANELS.RISKS]: Risks,
+		[VIEWER_PANELS.TICKETS]: Tickets,
 		[VIEWER_PANELS.GROUPS]: Groups,
 		[VIEWER_PANELS.VIEWS]: Views,
 		[VIEWER_PANELS.TREE]: Tree,

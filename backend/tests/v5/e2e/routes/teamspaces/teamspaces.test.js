@@ -19,9 +19,9 @@ const SuperTest = require('supertest');
 const ServiceHelper = require('../../../helper/services');
 const { src } = require('../../../helper/path');
 const { generateRandomNumber, generateRandomModel, generateRandomProject, generateRandomString } = require('../../../helper/services');
+
+const { DEFAULT_OWNER_JOB } = require(`${src}/models/jobs.constants`);
 const config = require('../../../../../src/v5/utils/config');
-const { TEAM_MEMBER } = require('../../../../../src/v5/models/roles.constants');
-const { TEAMSPACE_ADMIN } = require('../../../../../src/v5/utils/permissions/permissions.constants');
 
 const { templates } = require(`${src}/utils/responseCodes`);
 
@@ -42,6 +42,7 @@ const usersInFirstTeamspace = [
 	ServiceHelper.generateUserCredentials(),
 ];
 const userWithFsAvatar = ServiceHelper.generateUserCredentials();
+const userWithNoAvatar = ServiceHelper.generateUserCredentials();
 const userWithGridFsAvatar = ServiceHelper.generateUserCredentials();
 
 // This is the list of teamspaces the user has access to
@@ -78,78 +79,58 @@ const project = generateRandomProject();
 const model = generateRandomModel({ collaborators: [userToRemoveFromTs.user] });
 const validExpiryDate = Date.now() + 100000;
 
-// This is the list of teamspaces the user has access to
-const breakingTSAccess = { name: ServiceHelper.generateRandomString(), isAdmin: true };
-
 const setupData = async () => {
 	await Promise.all(teamspaces.map(
 		({ name, isAdmin }) => {
 			const perms = isAdmin ? [testUser.user] : [];
-			return ServiceHelper.db.createTeamspace(name, perms, false);
+			return ServiceHelper.db.createTeamspace(name, perms);
 		},
 	));
 	await Promise.all([
-		ServiceHelper.db.createTeamspace(breakingTSAccess.name, [testUser2.user], true),
-		ServiceHelper.db.createTeamspace(tsWithFsAvatar.name, [userWithFsAvatar.user], false),
-		ServiceHelper.db.createTeamspace(tsWithGridFsAvatar.name, [userWithGridFsAvatar.user], false),
-		ServiceHelper.db.createTeamspace(tsWithLicense.name, [userWithLicense.user], false, {
-			billing: {
-				subscriptions: {
-					discretionary: {
-						collaborators: userCollabs,
-						data: licenseData,
-						expiryDate: validExpiryDate,
-					},
-				},
+		ServiceHelper.db.createTeamspace(tsWithFsAvatar.name, [userWithFsAvatar.user]),
+		ServiceHelper.db.createTeamspace(tsWithGridFsAvatar.name, [userWithGridFsAvatar.user]),
+		ServiceHelper.db.createTeamspace(tsWithLicense.name, [userWithLicense.user], {
+			discretionary: {
+				collaborators: userCollabs,
+				data: licenseData,
+				expiryDate: validExpiryDate,
 			},
 		}),
-		ServiceHelper.db.createTeamspace(tsWithMultipleLicenses.name, [userWithMultipleLicenses.user], false, {
-			billing: {
-				subscriptions: {
-					discretionary: {
-						collaborators: userCollabs,
-						data: licenseData,
-						expiryDate: validExpiryDate,
-					},
-					enterprise: {
-						collaborators: userCollabs,
-						data: licenseData,
-						expiryDate: validExpiryDate - 10,
-					},
+		ServiceHelper.db.createTeamspace(
+			tsWithMultipleLicenses.name,
+			[userWithMultipleLicenses.user],
+			{
+				discretionary: {
+					collaborators: userCollabs,
+					data: licenseData,
+					expiryDate: validExpiryDate,
+				},
+				enterprise: {
+					collaborators: userCollabs,
+					data: licenseData,
+					expiryDate: validExpiryDate - 10,
 				},
 			},
-		}),
+		),
 		ServiceHelper.db.createTeamspace(tsWithLicenseUnlimitedCollabs.name,
-			[userWithLicenseUnlimitedCollabs.user], false, {
-				billing: {
-					subscriptions: {
-						discretionary: {
-							collaborators: 'unlimited',
-							data: licenseData,
-							expiryDate: validExpiryDate,
-						},
-					},
+			[userWithLicenseUnlimitedCollabs.user], {
+				discretionary: {
+					collaborators: 'unlimited',
+					data: licenseData,
+					expiryDate: validExpiryDate,
 				},
 			}),
-		ServiceHelper.db.createTeamspace(tsWithExpiredLicense.name, [userWithExpiredLicense.user], false, {
-			billing: {
-				subscriptions: {
-					discretionary: {
-						collaborators: 'unlimited',
-						data: licenseData,
-						expiryDate: Date.now() - 100000,
-					},
-				},
-
+		ServiceHelper.db.createTeamspace(tsWithExpiredLicense.name, [userWithExpiredLicense.user], {
+			discretionary: {
+				collaborators: 'unlimited',
+				data: licenseData,
+				expiryDate: Date.now() - 100000,
 			},
 		}),
-		ServiceHelper.db.createTeamspace(tsWithUsersToRemove.name, [], false, {
-			permissions: [
-				{ user: userToRemoveFromTs.user, permissions: TEAMSPACE_ADMIN },
-				{ user: testUser.user, permissions: TEAMSPACE_ADMIN },
-				{ user: testUser2.user, permissions: TEAM_MEMBER },
-			],
-		})]);
+		ServiceHelper.db.createTeamspace(tsWithUsersToRemove.name, [
+			userToRemoveFromTs.user,
+			testUser.user,
+		])]);
 
 	await Promise.all([
 		ServiceHelper.db.createUser(
@@ -174,7 +155,7 @@ const setupData = async () => {
 		),
 		ServiceHelper.db.createUser(
 			testUser2,
-			[breakingTSAccess.name, tsWithUsersToRemove.name],
+			[tsWithUsersToRemove.name],
 		),
 		ServiceHelper.db.createUser(
 			userToRemoveFromTs,
@@ -187,6 +168,10 @@ const setupData = async () => {
 		ServiceHelper.db.createUser(
 			userWithFsAvatar,
 			[tsWithFsAvatar.name],
+		),
+		ServiceHelper.db.createUser(
+			userWithNoAvatar,
+			[tsWithGridFsAvatar.name],
 		),
 		ServiceHelper.db.createUser(
 			userWithGridFsAvatar,
@@ -213,11 +198,6 @@ const testGetTeamspaceList = () => {
 			const res = await agent.get(`/v5/teamspaces/?key=${testUser.apiKey}`).expect(templates.ok.status);
 			expect(res.body.teamspaces.length).toBe(teamspaces.concat([tsWithUsersToRemove]).length);
 			expect(res.body.teamspaces).toEqual(expect.arrayContaining(teamspaces));
-		});
-
-		test('should safely catch error if there is an internal error', async () => {
-			const res = await agent.get(`/v5/teamspaces/?key=${testUser2.apiKey}`).expect(templates.unknown.status);
-			expect(res.body.code).toEqual(templates.unknown.code);
 		});
 	});
 };
@@ -262,6 +242,7 @@ const testGetTeamspaceMembers = () => {
 
 				return data;
 			});
+			expectedData.push({ job: DEFAULT_OWNER_JOB, user: teamspaces[0].name });
 			expect(res.body.members.length).toBe(expectedData.length);
 			expect(res.body.members).toEqual(expect.arrayContaining(expectedData));
 		});
@@ -342,7 +323,7 @@ const testGetQuotaInfo = () => {
 					expiryDate: validExpiryDate,
 					freeTier: false,
 					data: { used: 0, available: spaceLimitInBytes },
-					seats: { used: 2, available: collaboratorLimit },
+					seats: { used: 3, available: collaboratorLimit },
 				},
 			);
 		});
@@ -358,7 +339,7 @@ const testGetQuotaInfo = () => {
 					expiryDate: validExpiryDate - 10,
 					freeTier: false,
 					data: { used: 0, available: spaceLimitInBytes },
-					seats: { used: 1, available: collaboratorLimit },
+					seats: { used: 2, available: collaboratorLimit },
 				},
 			);
 		});
@@ -372,7 +353,7 @@ const testGetQuotaInfo = () => {
 					expiryDate: validExpiryDate,
 					freeTier: false,
 					data: { used: 0, available: spaceLimitInBytes },
-					seats: { used: 1, available: 'unlimited' },
+					seats: { used: 2, available: 'unlimited' },
 				},
 			);
 		});
@@ -386,7 +367,7 @@ const testGetQuotaInfo = () => {
 					expiryDate: null,
 					freeTier: true,
 					data: { used: 0, available: spaceLimitInBytes },
-					seats: { used: 4, available: config.subscriptions.basic.collaborators },
+					seats: { used: 5, available: config.subscriptions.basic.collaborators },
 				},
 			);
 		});
@@ -465,6 +446,41 @@ const testRemoveTeamspaceMember = () => {
 	});
 };
 
+const testGetMemberAvatar = () => {
+	describe('Get teamspace member avatar', () => {
+		const route = (ts = tsWithGridFsAvatar.name, member = tsWithGridFsAvatar.name) => `/v5/teamspaces/${ts}/members/${member}/avatar`;
+		test('should fail without a valid session', async () => {
+			const res = await agent.get(route()).expect(templates.notLoggedIn.status);
+			expect(res.body.code).toEqual(templates.notLoggedIn.code);
+		});
+
+		test('should fail if the user does not have access to the teamspace', async () => {
+			const res = await agent.get(`${route()}/?key=${testUser.apiKey}`).expect(templates.teamspaceNotFound.status);
+			expect(res.body.code).toEqual(templates.teamspaceNotFound.code);
+		});
+
+		test('should fail the requested user is not a member of the teamspace', async () => {
+			const res = await agent.get(`${route(tsWithGridFsAvatar.name, testUser.user)}/?key=${userWithGridFsAvatar.apiKey}`).expect(templates.userNotFound.status);
+			expect(res.body.code).toEqual(templates.userNotFound.code);
+		});
+
+		test('should fail if the teamspace does not exist', async () => {
+			const res = await agent.get(`${route('sldkfjdl')}/?key=${userWithGridFsAvatar.apiKey}`).expect(templates.teamspaceNotFound.status);
+			expect(res.body.code).toEqual(templates.teamspaceNotFound.code);
+		});
+
+		test(`should return ${templates.fileNotFound.code} if the member does not have an avatar`, async () => {
+			const res = await agent.get(`${route(tsWithGridFsAvatar.name, userWithNoAvatar.user)}/?key=${userWithGridFsAvatar.apiKey}`).expect(templates.fileNotFound.status);
+			expect(res.body.code).toEqual(templates.fileNotFound.code);
+		});
+
+		test('should return member avatar', async () => {
+			const res = await agent.get(`${route()}/?key=${userWithGridFsAvatar.apiKey}`).expect(templates.ok.status);
+			expect(res.body).toEqual(Buffer.from(gridFsAvatarData));
+		});
+	});
+};
+
 describe('E2E routes/teamspaces', () => {
 	beforeAll(async () => {
 		server = await ServiceHelper.app();
@@ -477,4 +493,5 @@ describe('E2E routes/teamspaces', () => {
 	testGetAvatar();
 	testGetQuotaInfo();
 	testRemoveTeamspaceMember();
+	testGetMemberAvatar();
 });

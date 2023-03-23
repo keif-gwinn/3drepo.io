@@ -19,6 +19,7 @@ const { addModel, deleteModel, getModelList } = require('./commons/modelList');
 const { appendFavourites, deleteFavourites } = require('./commons/favourites');
 const { getFederationById, getFederations, updateModelSettings } = require('../../../../models/modelSettings');
 const Groups = require('./commons/groups');
+const Tickets = require('./commons/tickets');
 const Views = require('./commons/views');
 const { getIssuesCount } = require('../../../../models/issues');
 const { getLatestRevision } = require('../../../../models/revisions');
@@ -26,7 +27,7 @@ const { getProjectById } = require('../../../../models/projectSettings');
 const { getRisksCount } = require('../../../../models/risks');
 const { queueFederationUpdate } = require('../../../../services/modelProcessing');
 
-const Federations = { ...Groups, ...Views };
+const Federations = { ...Groups, ...Views, ...Tickets };
 
 Federations.addFederation = (teamspace, project, federation) => addModel(teamspace, project,
 	{ ...federation, federate: true });
@@ -69,15 +70,12 @@ const getLastUpdatesFromModels = async (teamspace, models) => {
 };
 
 Federations.getFederationStats = async (teamspace, federation) => {
-	const { properties, status, subModels, desc } = await getFederationById(teamspace, federation, {
+	const { properties, status, subModels: containers, desc } = await getFederationById(teamspace, federation, {
 		properties: 1,
 		status: 1,
 		subModels: 1,
 		desc: 1,
 	});
-
-	// Legacy schema compatibility
-	const containers = subModels ? subModels.map((m) => m.model || m) : undefined;
 
 	const [issueCount, riskCount, lastUpdates] = await Promise.all([
 		getIssuesCount(teamspace, federation),

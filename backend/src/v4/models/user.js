@@ -23,7 +23,7 @@ const db = require("../handler/db");
 const zxcvbn = require("zxcvbn");
 const utils = require("../utils");
 const Role = require("./role");
-const { addDefaultJobs, findJobByUser, usersWithJob, removeUserFromAnyJob, addUserToJob } = require("./job");
+const { findJobByUser, usersWithJob, removeUserFromAnyJob, addUserToJob } = require("./job");
 
 const Intercom = require("./intercom");
 
@@ -44,12 +44,14 @@ const {
 	getProjectsForAccountsList,
 	removeUserFromProjects
 } = require("./project");
-const FileRef = require("./fileRef");
-const UserProcessorV5 = require("../../v5/processors/users");
 const PermissionTemplates = require("./permissionTemplates");
 const { get } = require("lodash");
-const { assignUserToJob } = require("../../v5/models/jobs.js");
 const { fileExists } = require("./fileRef");
+const {v5Path} = require("../../interop");
+const { getAddOns } = require(`${v5Path}/models/teamspaceSettings`);
+const { getSpaceUsed } = require(`${v5Path}/utils/quota.js`);
+const TeamspaceProcessorV5 = require(`${v5Path}/processors/teamspaces/teamspaces`);
+const UserProcessorV5 = require(`${v5Path}/processors/users`);
 
 const COLL_NAME = "system.users";
 
@@ -87,11 +89,11 @@ const isAccountLocked = function (user) {
 const hasReachedLicenceLimit = async function (teamspace) {
 	const Invitations = require("./invitations");
 	const [userArr, invitations] = await Promise.all([
-		User.getAllUsersInTeamspace(teamspace.user),
-		Invitations.getInvitationsByTeamspace(teamspace.user)
+		User.getAllUsersInTeamspace(teamspace),
+		Invitations.getInvitationsByTeamspace(teamspace)
 	]);
 
-	const limits =  UserBilling.getSubscriptionLimits(teamspace.customData.billing);
+	const limits = await UserBilling.getSubscriptionLimits(teamspace);
 
 	const seatedLicences = userArr.length + invitations.length;
 	const reachedLimit =  (limits.collaboratorLimit !== "unlimited" &&  seatedLicences >= limits.collaboratorLimit);
@@ -99,10 +101,6 @@ const hasReachedLicenceLimit = async function (teamspace) {
 	if (reachedLimit) {
 		throw (responseCodes.LICENCE_LIMIT_REACHED);
 	}
-};
-
-const hasReadLatestTerms = function (user) {
-	return !user.customData.lastLoginAt || new Date(config.termsUpdatedAt) < user.customData.lastLoginAt;
 };
 
 // Find functions
@@ -138,15 +136,7 @@ const handleAuthenticateFail = async function (user, username) {
 
 const User = {};
 
-User.getTeamspaceSpaceUsed = async function (dbName) {
-	const settings = await db.find(dbName, "settings", {}, {_id: 1});
-
-	const spacePerModel = await Promise.all(settings.map(async (setting) =>
-		await FileRef.getTotalModelFileSize(dbName, setting._id))
-	);
-
-	return spacePerModel.reduce((total, value) => total + value, 0);
-};
+User.getTeamspaceSpaceUsed = (dbName) => getSpaceUsed(dbName);
 
 User.authenticate =  async function (username, password) {
 	if (!username || !password) {
@@ -190,16 +180,7 @@ User.authenticate =  async function (username, password) {
 		user.customData = {};
 	}
 
-	const termsPrompt = !hasReadLatestTerms(user);
-
-	user.customData.lastLoginAt = new Date();
-
-	await db.updateOne("admin", COLL_NAME, {user: username}, {
-		$set: {"customData.lastLoginAt": user.customData.lastLoginAt},
-		$unset: {"customData.loginInfo.failedLoginCount":""}
-	});
-
-	return { username: user.user, flags:{ termsPrompt } };
+	return { username: user.user };
 };
 
 User.getProfileByUsername = async function (username) {
@@ -227,17 +208,13 @@ User.getProfileByUsername = async function (username) {
 	};
 };
 
-User.getAddOnsForTeamspace = async (user) => {
-	const { customData } = await db.findOne("admin", COLL_NAME, { user }, {
-		"customData.addOns" : 1,
-		"customData.vrEnabled": 1,
-		"customData.hereEnabled": 1,
-		"customData.srcEnabled": 1
-	});
+User.getAddOnsForTeamspace = (user) => {
+	return getAddOns(user);
+};
 
-	const embeddedObj = customData.addOns || {};
-	delete customData.addOns;
-	return { ...customData, ...embeddedObj};
+User.isHereEnabled = async function (username) {
+	const { hereEnabled } = await User.getAddOnsForTeamspace(username);
+	return !!hereEnabled;
 };
 
 User.getStarredMetadataTags = async function (username) {
@@ -315,15 +292,9 @@ User.deleteStarredModel = async function (username, ts, modelID) {
 	return {};
 };
 
-User.generateApiKey = async function (username) {
-	const apiKey = utils.generateHashString();
-	await db.updateOne("admin", COLL_NAME, {user: username}, {$set: {"customData.apiKey" : apiKey}});
-	return apiKey;
-};
+User.generateApiKey = (username) => UserProcessorV5.generateApiKey(username);
 
-User.deleteApiKey = async function (username) {
-	await db.updateOne("admin", COLL_NAME, {user: username}, {$unset: {"customData.apiKey" : 1}});
-};
+User.deleteApiKey = (username) => UserProcessorV5.deleteApiKey(username);
 
 User.findUsersWithoutMembership = async function (teamspace, searchString) {
 	const regex = new RegExp(`^${searchString}$`, "i");
@@ -464,32 +435,6 @@ User.createUser = async function (username, password, customData, tokenExpiryTim
 	const expiryAt = new Date();
 	expiryAt.setHours(expiryAt.getHours() + tokenExpiryTime);
 
-	// default permission
-	cleanedCustomData.permissions = [{
-		user: username,
-		permissions: [C.PERM_TEAMSPACE_ADMIN]
-	}];
-
-	// default templates
-	cleanedCustomData.permissionTemplates = [
-		{
-			_id: C.ADMIN_TEMPLATE,
-			permissions: C.ADMIN_TEMPLATE_PERMISSIONS
-		},
-		{
-			_id: C.VIEWER_TEMPLATE,
-			permissions: C.VIEWER_TEMPLATE_PERMISSIONS
-		},
-		{
-			_id: C.COMMENTER_TEMPLATE,
-			permissions: C.COMMENTER_TEMPLATE_PERMISSIONS
-		},
-		{
-			_id: C.COLLABORATOR_TEMPLATE,
-			permissions: C.COLLABORATOR_TEMPLATE_PERMISSIONS
-		}
-	];
-
 	cleanedCustomData.emailVerifyToken = {
 		token: utils.generateHashString(),
 		expiredAt: expiryAt
@@ -519,7 +464,7 @@ User.verify = async function (username, token, options) {
 	options = options || {};
 
 	const allowRepeatedVerify = options.allowRepeatedVerify;
-	const skipImportToyModel = options.skipImportToyModel;
+	const skipImportToyModel = true; // As of 4.28 we no longer import a toy project for users // options.skipImportToyModel;
 
 	const user = await User.findByUserName(username);
 
@@ -566,28 +511,9 @@ User.verify = async function (username, token, options) {
 	}
 
 	try {
-		await Role.createTeamSpaceRole(username);
-		await Role.grantTeamSpaceRoleToUser(username, username);
+		await TeamspaceProcessorV5.initTeamspace(username);
 	} catch(err) {
-		systemLogger.logError("Failed to create role for ", username, err);
-	}
-
-	try {
-		await addDefaultJobs(username);
-	} catch(err) {
-		systemLogger.logError("Failed to create default jobs for ", username, err);
-	}
-
-	try {
-		await assignUserToJob(username, C.DEFAULT_OWNER_JOB, username);
-	} catch(err) {
-		systemLogger.logError("Failed to assign user to job ", C.DEFAULT_OWNER_JOB, err);
-	}
-
-	try {
-		await TeamspaceSettings.createTeamspaceSettings(username);
-	} catch(err) {
-		systemLogger.logError("Failed to create teamspace settings for ", username, err);
+		systemLogger.logError("Failed to init teamspace settings for ", username, err);
 	}
 };
 
@@ -688,9 +614,11 @@ async function _findModelDetails(dbUserCache, username, model) {
 	return { setting, permissions };
 }
 
-async function _calSpace(user) {
-	const quota = UserBilling.getSubscriptionLimits(user.customData.billing);
-	const sizeInBytes = await User.getTeamspaceSpaceUsed(user.user);
+async function _calSpace(teamspace) {
+	const [quota, sizeInBytes] = await Promise.all([
+		UserBilling.getSubscriptionLimits(teamspace),
+		User.getTeamspaceSpaceUsed(teamspace)
+	]);
 
 	if (quota.spaceLimit > 0) {
 		quota.spaceUsed = sizeInBytes / (1024 * 1024); // In MiB
@@ -746,7 +674,13 @@ async function _createAccounts(roles, userName) {
 			}
 
 			const tsPromises = [];
-			const permission = AccountPermissions.findByUser(user, userName);
+			let settings;
+			try {
+				settings = await TeamspaceSettings.getTeamspaceSettings(role.db);
+			} catch (err) {
+				return;
+			}
+			const permission = AccountPermissions.findByUser(settings, userName);
 
 			if (permission) {
 				// Check for admin Privileges first
@@ -895,7 +829,7 @@ async function _createAccounts(roles, userName) {
 }
 
 User.getSubscriptionLimits = function(user) {
-	return UserBilling.getSubscriptionLimits(user.customData.billing);
+	return UserBilling.getSubscriptionLimits(user.user);
 };
 
 User.listAccounts = async function(user) {
@@ -949,9 +883,7 @@ User.removeTeamMember = async function (teamspace, userToRemove, cascadeRemove) 
 };
 
 User.addTeamMember = async function(teamspace, userToAdd, job, permissions) {
-	const teamspaceUser = await User.findByUserName(teamspace);
-
-	await hasReachedLicenceLimit(teamspaceUser);
+	await hasReachedLicenceLimit(teamspace);
 
 	let userEntry = null;
 	if (C.EMAIL_REGEXP.test(userToAdd)) { // if the submited username is the email
@@ -977,8 +909,10 @@ User.addTeamMember = async function(teamspace, userToAdd, job, permissions) {
 	const promises = [];
 	promises.push(addUserToJob(teamspace, job, userEntry.user));
 
+	const teamspaceSettings = await TeamspaceSettings.getTeamspaceSettings(teamspace);
+
 	if (permissions && permissions.length) {
-		promises.push(AccountPermissions.updateOrCreate(teamspaceUser, userEntry.user, permissions));
+		promises.push(AccountPermissions.updateOrCreate(teamspaceSettings, userEntry.user, permissions));
 	}
 
 	await Promise.all(promises);
@@ -997,12 +931,13 @@ User.getBasicDetails = function(userObj) {
 };
 
 User.getQuotaInfo = async function (teamspace) {
-	const teamspaceFound = await User.findByUserName(teamspace);
-	if (!teamspaceFound) {
-		throw (responseCodes.USER_NOT_FOUND);
+	const teamspaceUser = await User.findByUserName(teamspace);
+
+	if (!teamspaceUser) {
+		throw responseCodes.USER_NOT_FOUND;
 	}
 
-	return _calSpace(teamspaceFound);
+	return _calSpace(teamspaceUser.user);
 };
 
 User.hasSufficientQuota = async (teamspace, size) => {
@@ -1011,10 +946,7 @@ User.hasSufficientQuota = async (teamspace, size) => {
 	return spaceLeft >= size;
 };
 
-User.hasReachedLicenceLimitCheck = async function(teamspace) {
-	const teamspaceUser = await User.findByUserName(teamspace);
-	await hasReachedLicenceLimit(teamspaceUser);
-};
+User.hasReachedLicenceLimitCheck = hasReachedLicenceLimit;
 
 User.getMembers = async function (teamspace) {
 	const promises = [];
@@ -1025,7 +957,7 @@ User.getMembers = async function (teamspace) {
 	});
 	const getJobInfo = usersWithJob(teamspace);
 
-	const getTeamspacePermissions = User.findByUserName(teamspace).then(user => user.customData.permissions);
+	const getTeamspacePermissions = TeamspaceSettings.getTeamspaceSettings(teamspace).then(({permissions}) => permissions);
 
 	promises.push(
 		getTeamspaceMembers,
@@ -1091,11 +1023,6 @@ User.getTeamMemberInfo = async function(teamspace, user) {
 	}
 };
 
-User.isHereEnabled = async function (username) {
-	const user = await User.findByUserName(username,  { _id: 0, "customData.hereEnabled": 1 });
-	return user.customData.hereEnabled;
-};
-
 User.findByUserName = async function (username, projection) {
 	return await findOne({ user: username }, projection);
 };
@@ -1132,17 +1059,9 @@ User.updateAvatar = async function(username, avatarBuffer) {
 	await UserProcessorV5.uploadAvatar(username, avatarBuffer);
 };
 
-User.updatePermissions = async function(username, updatedPermissions) {
-	await db.updateOne("admin", COLL_NAME, {user: username}, {$set: {"customData.permissions": updatedPermissions}});
-};
+User.updatePermissions = TeamspaceSettings.updatePermissions;
 
-User.updatePermissionTemplates = async function(username, updatedPermissions) {
-	await db.updateOne("admin", COLL_NAME, {user: username}, {$set: {"customData.permissionTemplates": updatedPermissions}});
-};
-
-User.updateSubscriptions = async function(username, subscriptions) {
-	await db.updateOne("admin", COLL_NAME, {user: username}, {$set: {"customData.billing.subscriptions": subscriptions}});
-};
+User.updateSubscriptions = TeamspaceSettings.updateSubscriptions;
 
 /*
 Payment (paypal) stuff

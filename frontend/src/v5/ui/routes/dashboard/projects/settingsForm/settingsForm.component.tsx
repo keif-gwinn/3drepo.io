@@ -15,22 +15,25 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { defaults, pick, omitBy, difference, isMatch, mapValues } from 'lodash';
 import { formatMessage } from '@/v5/services/intl';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { MenuItem } from '@mui/material';
 import { FormModal } from '@/v5/ui/controls/modal/formModal/formDialog.component';
-import { useForm, SubmitHandler } from 'react-hook-form';
+import { useForm, SubmitHandler, useWatch } from 'react-hook-form';
 import { useParams } from 'react-router';
 import { IContainer, ContainerSettings } from '@/v5/store/containers/containers.types';
 import { IFederation, FederationSettings } from '@/v5/store/federations/federations.types';
 import { EMPTY_VIEW } from '@/v5/store/store.helpers';
-import { FormTextField } from '@controls/formTextField/formTextField.component';
-import { FormSelectView } from '@controls/formSelectView/formSelectView.component';
-import { FormSelect } from '@controls/formSelect/formSelect.component';
+import { ShareTextField } from '@controls/shareTextField';
 import { FormattedMessage } from 'react-intl';
 import { DashboardParams } from '@/v5/ui/routes/routes.constants';
-import { FlexContainer, SectionTitle, ShareTextField, Placeholder, HiddenMenuItem } from './settingsForm.styles';
+import { nameAlreadyExists } from '@/v5/validation/errors.helpers';
+import { UnhandledErrorInterceptor } from '@controls/errorMessage/unhandledErrorInterceptor/unhandledErrorInterceptor.component';
+import { FormNumberField, FormSelect, FormSelectView, FormTextField } from '@controls/inputs/formInputs.component';
+import { ProjectsHooksSelectors } from '@/v5/services/selectorsHooks';
+import { FlexContainer, SectionTitle, Placeholder, HiddenMenuItem } from './settingsForm.styles';
 
 const UNITS = [
 	{
@@ -128,6 +131,8 @@ type ISettingsForm = {
 		project: string,
 		containerOrFederationId: string,
 		settings: ContainerSettings | FederationSettings,
+		onSuccess: () => void,
+		onError: (error) => void,
 	) => void;
 };
 
@@ -141,10 +146,14 @@ export const SettingsForm = ({
 	updateSettings,
 	onClose,
 }: ISettingsForm) => {
+	const [alreadyExistingNames, setAlreadyExistingNames] = useState([]);
+	const [isValid, setIsValid] = useState(false);
 	const DEFAULT_VALUES = getDefaultValues(containerOrFederation, isContainer) as any;
 	const {
 		handleSubmit,
 		reset,
+		getValues,
+		trigger,
 		watch,
 		control,
 		formState,
@@ -153,27 +162,42 @@ export const SettingsForm = ({
 		mode: 'onChange',
 		resolver: yupResolver(settingsSchema),
 		defaultValues: DEFAULT_VALUES,
+		context: { alreadyExistingNames },
 	});
 
-	const currentUnit = watch('unit');
-
+	const currentUnit = useWatch({ control, name: 'unit' });
 	const { teamspace, project } = useParams<DashboardParams>() as { teamspace: string, project: string };
+	const isProjectAdmin = ProjectsHooksSelectors.selectIsProjectAdmin();
+	const containerOrFederationName = isContainer ? 'Container' : 'Federation';
+	const EMPTY_GIS_VALUES = { latitude: 0, longitude: 0, angleFromNorth: 0 };
 
-	useEffect(() => {
-		if (open) {
-			fetchSettings(teamspace, project, containerOrFederation._id);
-			fetchViews(teamspace, project, containerOrFederation._id);
-		}
-	}, [open]);
+	const getGisValues = (obj) => defaults(pick(
+		omitBy(obj, (val) => val === ''),
+		Object.keys(EMPTY_GIS_VALUES),
+	), EMPTY_GIS_VALUES);
 
-	useEffect(() => {
-		if (open) {
-			reset(getDefaultValues(containerOrFederation, isContainer));
+	const fieldsHaveChanged = () => {
+		const gisKeys = Object.keys(EMPTY_GIS_VALUES);
+
+		// no field has changed
+		if (Object.keys(dirtyFields).length === 0) return false;
+
+		// fields other than the gis values changed
+		if (difference(Object.keys(dirtyFields), gisKeys).length > 0) return true;
+
+		// check whether gis values are different
+		return !isMatch(mapValues(getGisValues(getValues()), Number), getGisValues(DEFAULT_VALUES));
+	};
+
+	const onSubmitError = (err) => {
+		if (nameAlreadyExists(err)) {
+			setAlreadyExistingNames([getValues('name'), ...alreadyExistingNames]);
+			trigger('name');
 		}
-	}, [open]);
+	};
 
 	const onSubmit: SubmitHandler<IFormInput> = ({
-		latitude, longitude,
+		latitude = 0, longitude = 0,
 		x, y, z,
 		...otherSettings
 	}) => {
@@ -189,13 +213,23 @@ export const SettingsForm = ({
 			project,
 			containerOrFederation._id,
 			settings,
+			onClose,
+			onSubmitError,
 		);
-		onClose();
 	};
 
-	const fieldsHaveChanged = Object.keys(dirtyFields).length > 0;
+	useEffect(() => {
+		if (open) {
+			fetchSettings(teamspace, project, containerOrFederation._id);
+			fetchViews(teamspace, project, containerOrFederation._id);
+			reset(getDefaultValues(containerOrFederation, isContainer));
+			setAlreadyExistingNames([]);
+		}
+	}, [open]);
 
-	const containerOrFederationName = isContainer ? 'Container' : 'Federation';
+	useEffect(() => { reset(getDefaultValues(containerOrFederation, isContainer)); }, [containerOrFederation]);
+
+	useEffect(() => { setIsValid(formState.isValid && fieldsHaveChanged()); }, [JSON.stringify(watch())]);
 
 	return (
 		<FormModal
@@ -204,7 +238,7 @@ export const SettingsForm = ({
 			onClickClose={onClose}
 			onSubmit={handleSubmit(onSubmit)}
 			confirmLabel={formatMessage({ id: 'settings.ok', defaultMessage: 'Save Changes' })}
-			isValid={formState.isValid && fieldsHaveChanged}
+			isValid={isValid}
 		>
 			<SectionTitle>
 				<FormattedMessage
@@ -222,12 +256,14 @@ export const SettingsForm = ({
 				label={formatMessage({ id: 'settings.form.name', defaultMessage: 'Name' })}
 				required
 				formError={errors.name}
+				disabled={!isProjectAdmin}
 			/>
 			<FormTextField
 				name="desc"
 				control={control}
 				label={formatMessage({ id: 'settings.form.desc', defaultMessage: 'Description' })}
 				formError={errors.desc}
+				disabled={!isProjectAdmin}
 			/>
 			<FlexContainer>
 				<FormSelect
@@ -238,7 +274,7 @@ export const SettingsForm = ({
 						defaultMessage: 'Units',
 					})}
 					control={control}
-					defaultValue={DEFAULT_VALUES.unit}
+					disabled={!isProjectAdmin}
 				>
 					{UNITS.map(({ name, abbreviation }) => (
 						<MenuItem key={abbreviation} value={abbreviation}>
@@ -251,6 +287,7 @@ export const SettingsForm = ({
 					control={control}
 					label={formatMessage({ id: 'settings.form.code', defaultMessage: 'Code' })}
 					formError={errors.code}
+					disabled={!isProjectAdmin}
 				/>
 			</FlexContainer>
 			{isContainer && (
@@ -262,7 +299,7 @@ export const SettingsForm = ({
 							defaultMessage: 'Category',
 						})}
 						control={control}
-						defaultValue={DEFAULT_VALUES.type}
+						disabled={!isProjectAdmin}
 					>
 						{CONTAINER_TYPES.map((type) => (
 							<MenuItem key={type} value={type}>
@@ -278,11 +315,12 @@ export const SettingsForm = ({
 			)}
 			<FormSelectView
 				control={control}
+				name="defaultView"
+				label={formatMessage({ id: 'settings.form.defaultView', defaultMessage: 'Default View' })}
 				views={containerOrFederation.views}
 				containerOrFederationId={containerOrFederation._id}
 				isContainer={isContainer}
-				name="defaultView"
-				label={formatMessage({ id: 'settings.form.defaultView', defaultMessage: 'Default View' })}
+				disabled={!isProjectAdmin}
 			/>
 			<SectionTitle>
 				<FormattedMessage
@@ -291,50 +329,55 @@ export const SettingsForm = ({
 				/>
 			</SectionTitle>
 			<FlexContainer>
-				<FormTextField
+				<FormNumberField
 					name="latitude"
 					control={control}
 					label={formatMessage({ id: 'settings.form.lat', defaultMessage: 'Latitude (decimal)' })}
 					formError={errors.latitude}
-					required
+					disabled={!isProjectAdmin}
 				/>
-				<FormTextField
+				<FormNumberField
 					name="longitude"
 					control={control}
 					label={formatMessage({ id: 'settings.form.long', defaultMessage: 'Longitude (decimal)' })}
 					formError={errors.longitude}
-					required
+					disabled={!isProjectAdmin}
 				/>
 			</FlexContainer>
-			<FormTextField
+			<FormNumberField
 				name="angleFromNorth"
 				control={control}
 				label={formatMessage({ id: 'settings.form.angleFromNorth', defaultMessage: 'Angle from North (clockwise degrees)' })}
 				formError={errors.angleFromNorth}
+				disabled={!isProjectAdmin}
 			/>
 			<FlexContainer>
-				<FormTextField
+				<FormNumberField
 					name="x"
 					control={control}
 					label={`x (${currentUnit})`}
 					formError={errors.x}
 					required
+					disabled={!isProjectAdmin}
 				/>
-				<FormTextField
+				<FormNumberField
 					name="y"
 					control={control}
 					label={`y (${currentUnit})`}
 					formError={errors.y}
 					required
+					disabled={!isProjectAdmin}
 				/>
-				<FormTextField
+				<FormNumberField
 					name="z"
 					control={control}
 					label={`z (${currentUnit})`}
 					formError={errors.z}
 					required
+					disabled={!isProjectAdmin}
 				/>
 			</FlexContainer>
+			<UnhandledErrorInterceptor expectedErrorValidators={[nameAlreadyExists]} />
 		</FormModal>
 	);
 };

@@ -17,12 +17,11 @@
 import { useEffect } from 'react';
 import { useIntercom, IntercomProvider } from 'react-use-intercom';
 import { clientConfigService } from '@/v4/services/clientConfig';
-import { CurrentUserHooksSelectors } from '@/v5/services/selectorsHooks/currentUserSelectors.hooks';
-import { AuthHooksSelectors } from '@/v5/services/selectorsHooks/authSelectors.hooks';
+import { CurrentUserHooksSelectors, AuthHooksSelectors } from '@/v5/services/selectorsHooks';
 
 // Must be a separate component used as IntercomProvider child
 const IntercomButton = () => {
-	const { boot, shutdown } = useIntercom();
+	const { boot, hardShutdown } = useIntercom();
 	const currentUser = CurrentUserHooksSelectors.selectCurrentUser();
 	const isAuthenticated = AuthHooksSelectors.selectIsAuthenticated();
 
@@ -42,18 +41,19 @@ const IntercomButton = () => {
 	};
 
 	useEffect(() => {
-		if (isAuthenticated) {
+		if (isAuthenticated && currentUser.email) {
 			setNameAndMail();
 		} else {
-			shutdown();
+			hardShutdown();
 		}
-	}, [isAuthenticated]);
+	}, [isAuthenticated, currentUser.email]);
 
 	return <div />;
 };
 
 export const Intercom = () => {
 	const { intercomLicense } = clientConfigService;
+
 	return (
 		intercomLicense ? (
 			<IntercomProvider appId={intercomLicense}>

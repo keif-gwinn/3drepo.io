@@ -17,13 +17,14 @@
 import { useParams } from 'react-router';
 import { IContainer } from '@/v5/store/containers/containers.types';
 import { formatMessage } from '@/v5/services/intl';
-import { ContainersActionsDispatchers } from '@/v5/services/actionsDispatchers/containersActions.dispatchers';
+import { ContainersActionsDispatchers, DialogsActionsDispatchers } from '@/v5/services/actionsDispatchers';
 import { EllipsisMenu } from '@controls/ellipsisMenu/ellipsisMenu.component';
 import { EllipsisMenuItem } from '@controls/ellipsisMenu/ellipsisMenuItem/ellipsisMenutItem.component';
 import { canUploadToBackend } from '@/v5/store/containers/containers.helpers';
 import { viewerRoute } from '@/v5/services/routing/routing';
 import { DashboardParams } from '@/v5/ui/routes/routes.constants';
-import { DialogsActionsDispatchers } from '@/v5/services/actionsDispatchers/dialogsActions.dispatchers';
+import { ContainersHooksSelectors, ProjectsHooksSelectors } from '@/v5/services/selectorsHooks';
+import { uploadToContainer } from '../../../uploadFileForm/uploadFileForm.helpers';
 
 type ContainerEllipsisMenuProps = {
 	selected: boolean,
@@ -41,7 +42,8 @@ export const ContainerEllipsisMenu = ({
 	openContainerSettings,
 }: ContainerEllipsisMenuProps) => {
 	const { teamspace, project } = useParams<DashboardParams>();
-
+	const isProjectAdmin = ProjectsHooksSelectors.selectIsProjectAdmin();
+	const hasCollaboratorAccess = ContainersHooksSelectors.selectHasCollaboratorAccess(container._id);
 	return (
 		<EllipsisMenu selected={selected}>
 			<EllipsisMenuItem
@@ -57,7 +59,9 @@ export const ContainerEllipsisMenu = ({
 					id: 'containers.ellipsisMenu.uploadNewRevision',
 					defaultMessage: 'Upload new Revision',
 				})}
+				onClick={() => uploadToContainer(container._id)}
 				disabled={!canUploadToBackend(container.status)}
+				hidden={!hasCollaboratorAccess}
 			/>
 			<EllipsisMenuItem
 				title={formatMessage({
@@ -86,6 +90,7 @@ export const ContainerEllipsisMenu = ({
 					pathname: './user_permissions',
 					search: `?modelId=${container._id}`,
 				}}
+				hidden={!isProjectAdmin}
 			/>
 			<EllipsisMenuItem
 				title={formatMessage({
@@ -124,6 +129,7 @@ export const ContainerEllipsisMenu = ({
 						defaultMessage: 'By deleting this Container your data will be lost permanently and will not be recoverable.',
 					}),
 				})}
+				hidden={!isProjectAdmin}
 			/>
 		</EllipsisMenu>
 	);

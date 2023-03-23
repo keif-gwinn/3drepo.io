@@ -16,20 +16,33 @@
  */
 
 import styled from 'styled-components';
-import { Typography } from '@mui/material';
-import { Avatar } from '@controls/avatar';
 import { hexToOpacity } from '@/v5/ui/themes/theme';
+import { CoverImage } from '@controls/coverImage/coverImage.component';
+import { Content as DashboardContent } from '../../projects/projects.styles';
 
 export const Container = styled.div`
+	background-color: ${({ theme }) => theme.palette.tertiary.lightest};
 	height: 100%;
 	display: flex;
 	flex-direction: column;
 `;
 
-export const Content = styled.section`
-	background-color: ${({ theme }) => theme.palette.tertiary.lightest};
-	overflow-y: auto;
-	flex-grow: 1;
+export const Content = styled(DashboardContent)`
+	margin-top: 32px;
+	padding: 9px 30px 41px;
+	background-color: ${({ theme }) => theme.palette.primary.contrast};
+	border-radius: 10px;
+	flex-direction: column;
+	display: flex;
+	justify-content: flex-start;
+	box-sizing: border-box;
+`;
+
+export const Section = styled.section`
+	min-height: 100%;
+	height: auto;
+	display: flex;
+	flex-direction: column;
 `;
 
 export const TopBar = styled.div`
@@ -42,27 +55,18 @@ export const TopBar = styled.div`
 	border-top: 1px solid ${({ theme }) => hexToOpacity(theme.palette.primary.main, 10)};
 `;
 
+export const TeamspaceImage = styled(CoverImage)`
+	border-radius: 10px;
+	height: 142px;
+	width: 142px;
+`;
+
 export const TeamspaceInfo = styled.div`
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-start;
-	align-items: center;
+	align-items: flex-start;
 	color: ${({ theme }) => theme.palette.primary.contrast};
 	margin-left: 29px;
-`;
-
-export const TeamspaceName = styled(Typography).attrs({
-	variant: 'h1',
-})``;
-
-export const TeamspaceAvatar = styled(Avatar)`
-	.MuiAvatar-root {
-		border-radius: 10px;
-		height: 142px;
-		width: 142px;
-		margin: 0;
-		font-size: 40px;
-		color: ${({ theme }) => theme.palette.tertiary.dark};
-		background-color: ${({ theme }) => theme.palette.primary.contrast};
-	}
+	row-gap: 12px;
 `;

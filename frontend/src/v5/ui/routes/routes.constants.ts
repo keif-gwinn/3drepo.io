@@ -31,10 +31,13 @@ const PROJECT_ROUTE_BASE_TAB = `${PROJECT_ROUTE_BASE}/t`;
 export const PROJECT_ROUTE = `${PROJECT_ROUTE_BASE_TAB}/:tab`;
 export const CONTAINERS_ROUTE = `${PROJECT_ROUTE_BASE_TAB}/containers`;
 export const FEDERATIONS_ROUTE = `${PROJECT_ROUTE_BASE_TAB}/federations`;
+export const BOARD_ROUTE = `${PROJECT_ROUTE_BASE_TAB}/board/:type?/:containerOrFederation?`;
 
 export const PRIVACY_ROUTE = '/v5/privacy';
 export const COOKIES_ROUTE = '/v5/cookies';
 export const TERMS_ROUTE = '/v5/terms';
+
+export const RELEASE_NOTES_ROUTE = 'https://help.3drepo.io/en/collections/3358238';
 
 // eslint-disable-next-line no-restricted-globals
 export const matchesPath = (path) => Boolean(matchPath(location.pathname, { path, exact: true }));
@@ -48,8 +51,7 @@ export interface DashboardParams {
 	project?: string;
 }
 
-export interface ViewerParams {
-	teamspace?: string;
+export interface ViewerParams extends DashboardParams {
 	containerOrFederation?: string;
 	revision?: string;
 }

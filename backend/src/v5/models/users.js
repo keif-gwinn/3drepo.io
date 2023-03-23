@@ -15,9 +15,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+const { USERS_COL, USERS_DB_NAME } = require('./users.constants');
 const { createResponseCode, templates } = require('../utils/responseCodes');
-const { TEAMSPACE_ADMIN } = require('../utils/permissions/permissions.constants');
-const { USERS_DB_NAME } = require('./users.constants');
 const config = require('../utils/config');
 const db = require('../handler/db');
 const { events } = require('../services/eventsManager/eventsManager.constants');
@@ -25,85 +24,21 @@ const { generateHashString } = require('../utils/helper/strings');
 const { publish } = require('../services/eventsManager/eventsManager');
 
 const User = {};
-const COLL_NAME = 'system.users';
 
-const userQuery = (query, projection, sort) => db.findOne(USERS_DB_NAME, COLL_NAME, query, projection, sort);
-const updateUser = (username, action) => db.updateOne(USERS_DB_NAME, COLL_NAME, { user: username }, action);
+const userQuery = (query, projection, sort) => db.findOne(USERS_DB_NAME, USERS_COL, query, projection, sort);
+const updateUser = (username, action) => db.updateOne(USERS_DB_NAME, USERS_COL, { user: username }, action);
 
-const recordSuccessfulAuthAttempt = async (user) => {
-	const { customData: { lastLoginAt } = {} } = await User.getUserByUsername(user, { 'customData.lastLoginAt': 1 });
-
-	await updateUser(user, {
-		$set: { 'customData.lastLoginAt': new Date() },
-		$unset: { 'customData.loginInfo.failedLoginCount': '' },
-	});
-
-	const termsPrompt = !lastLoginAt || new Date(config.termsUpdatedAt) > lastLoginAt;
-
-	return { username: user, flags: { termsPrompt } };
-};
-
-const recordFailedAuthAttempt = async (user) => {
-	const projection = { 'customData.loginInfo': 1, 'customData.email': 1 };
-	const { customData: { loginInfo, email } = {} } = await User.getUserByUsername(user, projection);
-
-	const currentTime = new Date();
-
-	const { lastFailedLoginAt = 0, failedLoginCount = 0 } = loginInfo || {};
-
-	const resetCounter = (currentTime - lastFailedLoginAt) > config.loginPolicy.lockoutDuration;
-
-	const newCount = resetCounter ? 1 : failedLoginCount + 1;
-
-	await db.updateOne(USERS_DB_NAME, COLL_NAME, { user }, {
-		$set: {
-			'customData.loginInfo.lastFailedLoginAt': currentTime,
-			'customData.loginInfo.failedLoginCount': newCount,
-		},
-	});
-
-	publish(events.FAILED_LOGIN_ATTEMPT, { email, failedLoginCount: newCount });
-
-	return config.loginPolicy.maxUnsuccessfulLoginAttempts - newCount;
-};
-
-User.canLogIn = async (user) => {
-	const projection = { 'customData.loginInfo': 1, 'customData.inactive': 1 };
-	const { customData: { loginInfo, inactive } = {} } = await User.getUserByUsername(user, projection);
-
-	if (inactive) {
-		throw templates.userNotVerified;
-	}
-
-	const now = new Date();
-	const { lastFailedLoginAt = now, failedLoginCount } = loginInfo || {};
-	const timeElapsed = now - lastFailedLoginAt;
-
-	const { lockoutDuration, maxUnsuccessfulLoginAttempts } = config.loginPolicy;
-
-	if (lastFailedLoginAt
-		&& timeElapsed < lockoutDuration
-		&& failedLoginCount >= maxUnsuccessfulLoginAttempts) {
-		throw templates.tooManyLoginAttempts;
-	}
+User.isAccountActive = async (user) => {
+	const projection = { 'customData.inactive': 1 };
+	const { customData: { inactive } = {} } = await User.getUserByUsername(user, projection);
+	return !inactive;
 };
 
 User.authenticate = async (user, password) => {
-	try {
-		await db.authenticate(user, password);
-	} catch (err) {
-		if (err.code === templates.incorrectUsernameOrPassword.code) {
-			const remainingLoginAttempts = await recordFailedAuthAttempt(user);
-			if (remainingLoginAttempts <= config.loginPolicy.remainingLoginAttemptsPromptThreshold) {
-				throw createResponseCode(templates.incorrectUsernameOrPassword,
-					`${templates.incorrectUsernameOrPassword.message} (Remaining attempts: ${remainingLoginAttempts})`);
-			}
-		}
+	if (await db.authenticate(user, password)) return;
 
-		throw err;
-	}
-
-	return recordSuccessfulAuthAttempt(user);
+	publish(events.FAILED_LOGIN_ATTEMPT, { user });
+	throw templates.incorrectUsernameOrPassword;
 };
 
 User.getUserByQuery = async (query, projection) => {
@@ -116,10 +51,13 @@ User.getUserByQuery = async (query, projection) => {
 
 User.getUserByUsername = (user, projection) => User.getUserByQuery({ user }, projection);
 
+User.getUserByEmail = (email, projection) => User.getUserByQuery({ 'customData.email': email }, projection);
+
 User.getUserByUsernameOrEmail = (usernameOrEmail, projection) => User.getUserByQuery({
 	$or: [{ user: usernameOrEmail },
-		// eslint-disable-next-line security/detect-non-literal-regexp
-		{ 'customData.email': new RegExp(`^${usernameOrEmail.replace(/(\W)/g, '\\$1')}$`, 'i') }] }, projection);
+	// eslint-disable-next-line security/detect-non-literal-regexp
+		{ 'customData.email': new RegExp(`^${usernameOrEmail.replace(/(\W)/g, '\\$1')}$`, 'i') }],
+}, projection);
 
 User.getFavourites = async (user, teamspace) => {
 	const { customData } = await User.getUserByUsername(user, { 'customData.starredModels': 1 });
@@ -168,18 +106,13 @@ User.deleteFavourites = async (username, teamspace, favouritesToRemove) => {
 			const action = { $unset: { [`customData.starredModels.${teamspace}`]: 1 } };
 			await updateUser(username, action);
 		}
-	} else {
+	} else if (favouritesToRemove?.length) {
 		throw createResponseCode(templates.invalidArguments, "The IDs provided are not in the user's favourites list");
 	}
 };
 
 User.updatePassword = async (username, newPassword) => {
-	const updateUserCmd = {
-		updateUser: username,
-		pwd: newPassword,
-	};
-
-	await db.runCommand(USERS_DB_NAME, updateUserCmd);
+	await db.setPassword(username, newPassword);
 	await updateUser(username, { $unset: { 'customData.resetPasswordToken': 1 } });
 };
 
@@ -209,7 +142,6 @@ User.deleteApiKey = (username) => updateUser(username, { $unset: { 'customData.a
 User.addUser = async (newUserData) => {
 	const customData = {
 		createdAt: new Date(),
-		inactive: true,
 		firstName: newUserData.firstName,
 		lastName: newUserData.lastName,
 		email: newUserData.email,
@@ -222,21 +154,22 @@ User.addUser = async (newUserData) => {
 				company: newUserData.company,
 			},
 		},
-		permissions: [],
+		...(newUserData.sso ? { sso: newUserData.sso } : { inactive: true }),
 	};
 
-	const expiryAt = new Date();
-	expiryAt.setHours(expiryAt.getHours() + config.tokenExpiry.emailVerify);
-	customData.emailVerifyToken = {
-		token: newUserData.token,
-		expiredAt: expiryAt,
-	};
+	if (!newUserData.sso) {
+		const expiryAt = new Date();
+		expiryAt.setHours(expiryAt.getHours() + config.tokenExpiry.emailVerify);
+		customData.emailVerifyToken = { token: newUserData.token, expiredAt: expiryAt };
+	}
 
 	await db.createUser(newUserData.username, newUserData.password, customData);
 };
 
+User.removeUser = (user) => db.deleteOne(USERS_DB_NAME, USERS_COL, { user });
+
 User.verify = async (username) => {
-	const { customData } = await db.findOneAndUpdate(USERS_DB_NAME, COLL_NAME, { user: username },
+	const { customData } = await db.findOneAndUpdate(USERS_DB_NAME, USERS_COL, { user: username },
 		{
 			$unset: {
 				'customData.inactive': 1,
@@ -254,10 +187,27 @@ User.verify = async (username) => {
 	return customData;
 };
 
-User.grantAdminToUser = (teamspace, username) => updateUser(teamspace,
-	{ $push: { 'customData.permissions': { user: username, permissions: [TEAMSPACE_ADMIN] } } });
-
 User.updateResetPasswordToken = (username, resetPasswordToken) => updateUser(username,
 	{ $set: { 'customData.resetPasswordToken': resetPasswordToken } });
+
+User.unlinkFromSso = async (username, newPassword) => {
+	await updateUser(username, { $unset: { 'customData.sso': 1 } });
+	await User.updatePassword(username, newPassword);
+};
+
+User.linkToSso = (username, email, firstName, lastName, ssoData) => updateUser(username,
+	{
+		$set: {
+			'customData.email': email,
+			'customData.firstName': firstName,
+			'customData.lastName': lastName,
+			'customData.sso': ssoData,
+		},
+	});
+
+User.isSsoUser = async (username) => {
+	const { customData: { sso } } = await User.getUserByUsername(username, { 'customData.sso': 1 });
+	return !!sso;
+};
 
 module.exports = User;

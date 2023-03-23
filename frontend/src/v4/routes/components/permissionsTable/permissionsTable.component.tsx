@@ -20,7 +20,7 @@ import Tooltip from '@mui/material/Tooltip';
 import { isEmpty, isEqual, memoize, pick } from 'lodash';
 import { PureComponent } from 'react';
 
-import AdminIconSrc from '@assets/icons/how_to_reg.svg';
+import AdminIconSrc from '@assets/icons/v4/how_to_reg.svg';
 import { MODEL_ROLES_TYPES } from '../../../constants/model-permissions';
 import { CellUserSearch } from '../customTable/components/cellUserSearch/cellUserSearch.component';
 import { TableHeadingRadio } from '../customTable/components/tableHeadingRadio/tableHeadingRadio.component';
@@ -109,6 +109,7 @@ interface IProps {
 	roles: any[];
 	context?: string;
 	onSelectionChange?: (selectedUsers) => void;
+	onFilterChange?: (filteredUsers) => void;
 	onPermissionsChange?: (permissions) => void;
 	rowStateInterceptor?: (props) => void;
 }
@@ -307,6 +308,7 @@ export class PermissionsTable extends PureComponent<IProps, IState> {
 						cells={cells}
 						rows={rows}
 						onSelectionChange={onSelectionChange}
+						onFilterChange={this.props.onFilterChange}
 						renderCheckbox={this.renderCustomCheckbox}
 					/>
 				) : null }

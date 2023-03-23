@@ -16,29 +16,24 @@
  */
 
 import { createSelector } from 'reselect';
-import { isEmpty } from 'lodash';
 import { selectCurrentProject } from '@/v5/store/projects/projects.selectors';
+import { compact } from 'lodash';
 import { IFederationsState } from './federations.redux';
 import { IFederation } from './federations.types';
 import { selectContainers } from '../containers/containers.selectors';
+import { Role } from '../currentUser/currentUser.types';
+import { isCollaboratorRole, isCommenterRole } from '../store.helpers';
 
-const selectFederationsDomain = (state): IFederationsState => state.federations;
+const selectFederationsDomain = (state): IFederationsState => state?.federations || ({ federationsByProject: {} });
 
 export const selectFederations = createSelector(
 	selectFederationsDomain, selectCurrentProject,
-	(state, currentProject) => state.federationsByProject[currentProject] ?? [],
+	(state, currentProject) => state?.federationsByProject[currentProject] ?? [],
 );
 
 export const selectFavouriteFederations = createSelector(
 	selectFederations,
 	(federations) => federations.filter(({ isFavourite }) => isFavourite),
-);
-
-export const selectHasFederations = createSelector(
-	selectFederations, selectFavouriteFederations, (federations, favouriteFederations) => ({
-		favourites: !isEmpty(favouriteFederations),
-		all: !isEmpty(federations),
-	}),
 );
 
 export const selectIsListPending = createSelector(
@@ -60,7 +55,22 @@ export const selectFederationById = createSelector(
 export const selectContainersByFederationId = createSelector(
 	selectContainers,
 	selectFederationById,
-	(containers, federation) => federation?.containers?.map(
+	(containers, federation) => compact(federation?.containers?.map(
 		(containerId) => containers.find((container) => container._id === containerId),
-	) ?? [],
+	)) ?? [],
+);
+
+export const selectFederationRole = createSelector(
+	selectFederationById,
+	(federation): Role | null => federation?.role || null,
+);
+
+export const selectHasCollaboratorAccess = createSelector(
+	selectFederationRole,
+	(role): boolean => isCollaboratorRole(role),
+);
+
+export const selectHasCommenterAccess = createSelector(
+	selectFederationRole,
+	(role): boolean => isCommenterRole(role),
 );

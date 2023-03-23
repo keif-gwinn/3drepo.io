@@ -21,12 +21,13 @@ const {
 	hasReadAccessToModel,
 	isTeamspaceAdmin,
 } = require('../../../utils/permissions/permissions');
+const { getAllTemplates } = require('../../../models/tickets.templates');
 const { removeModelData } = require('../../../utils/helper/models');
 
 const Projects = {};
 
-const hasSomeModelAccess = async (teamspace, models, user) => {
-	const modelAccess = await Promise.all(models.map((model) => hasReadAccessToModel(teamspace, model, user)));
+const hasSomeModelAccess = async (teamspace, project, models, user) => {
+	const modelAccess = await Promise.all(models.map((model) => hasReadAccessToModel(teamspace, project, model, user)));
 	return modelAccess.some((bool) => bool);
 };
 
@@ -35,7 +36,7 @@ Projects.getProjectList = async (teamspace, user) => {
 	const tsAdmin = await isTeamspaceAdmin(teamspace, user);
 	return (await Promise.all(projects.map(async ({ _id, name, permissions, models }) => {
 		const isAdmin = tsAdmin || hasProjectAdminPermissions(permissions, user);
-		const hasAccess = isAdmin || await hasSomeModelAccess(teamspace, models, user);
+		const hasAccess = isAdmin || await hasSomeModelAccess(teamspace, _id, models, user);
 		return hasAccess ? { _id, name, isAdmin } : [];
 	}))).flat();
 };
@@ -49,6 +50,11 @@ Projects.deleteProject = async (teamspace, projectId) => {
 
 	await deleteProject(teamspace, projectId);
 };
+
+// passing project in to future proof this - the list will be filtered by project settings configurations
+Projects.getAllTemplates = (teamspace, project, showDeprecated) => getAllTemplates(
+	teamspace, showDeprecated, { name: 1, deprecated: 1, code: 1 },
+);
 
 Projects.getProjectSettings = (teamspace, projectId) => getProjectById(teamspace, projectId, { name: 1, _id: 0 });
 

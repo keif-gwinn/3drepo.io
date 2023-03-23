@@ -21,7 +21,7 @@ import { getPasswordStrength } from '@/v4/services/validation';
 import { avatarFileIsTooBig } from '@/v5/store/currentUser/currentUser.helpers';
 import { trimmedString } from '../shared/validators';
 
-export const username = (alreadyExistingUsernames) => trimmedString
+export const username = trimmedString
 	.required(
 		formatMessage({
 			id: 'userSignupForm.username.error.required',
@@ -48,7 +48,9 @@ export const username = (alreadyExistingUsernames) => trimmedString
 			id: 'userRegistration.username.alreadyExisting',
 			defaultMessage: 'This username is already taken',
 		}),
-		(usernameValue) => !alreadyExistingUsernames.includes(usernameValue),
+		(usernameValue, testContext) => (
+			!testContext.options.context.alreadyExistingUsernames.map((u) => u.trim()).includes(usernameValue)
+		),
 	);
 
 export const password = (passwordName = 'Password') => Yup.string()
@@ -78,6 +80,10 @@ export const password = (passwordName = 'Password') => Yup.string()
 	);
 
 export const firstName = trimmedString
+	.required(formatMessage({
+		id: 'validation.firstName.error.required',
+		defaultMessage: 'First name is a required field',
+	}))
 	.min(1, formatMessage({
 		id: 'validation.firstName.error.min',
 		defaultMessage: 'First name must be at least 1 characters',
@@ -85,13 +91,13 @@ export const firstName = trimmedString
 	.max(35, formatMessage({
 		id: 'validation.firstName.error.max',
 		defaultMessage: 'First name is limited to 35 characters',
-	}))
-	.required(formatMessage({
-		id: 'validation.firstName.error.required',
-		defaultMessage: 'First name is a required field',
 	}));
 
 export const lastName = trimmedString
+	.required(formatMessage({
+		id: 'validation.lastName.error.required',
+		defaultMessage: 'Last name is a required field',
+	}))
 	.min(1, formatMessage({
 		id: 'validation.lastName.error.min',
 		defaultMessage: 'Last name must be at least 1 characters',
@@ -99,10 +105,6 @@ export const lastName = trimmedString
 	.max(35, formatMessage({
 		id: 'validation.lastName.error.max',
 		defaultMessage: 'Last name is limited to 35 characters',
-	}))
-	.required(formatMessage({
-		id: 'validation.lastName.error.required',
-		defaultMessage: 'Last name is a required field',
 	}));
 
 export const company = trimmedString
@@ -119,13 +121,17 @@ export const countryCode = Yup.string()
 		}),
 	);
 
-export const email = (alreadyExistingEmails) => Yup.string()
+export const email = trimmedString
 	.email(
 		formatMessage({
 			id: 'validation.email.error.invalid',
 			defaultMessage: 'Invalid email address',
 		}),
 	)
+	.max(254, formatMessage({
+		id: 'validation.email.error.max',
+		defaultMessage: 'Email is limited to 254 characters',
+	}))
 	.required(
 		formatMessage({
 			id: 'validation.email.error.required',
@@ -138,7 +144,9 @@ export const email = (alreadyExistingEmails) => Yup.string()
 			id: 'validation.email.alreadyExisting',
 			defaultMessage: 'This email is already taken',
 		}),
-		(emailValue) => !alreadyExistingEmails.includes(emailValue),
+		(emailValue, testContext) => (
+			!testContext.options.context.alreadyExistingEmails.map((e) => e.trim()).includes(emailValue)
+		),
 	);
 
 export const avatarFile = Yup.mixed()

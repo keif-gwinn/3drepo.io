@@ -18,27 +18,47 @@
 const Users = {};
 
 const { AVATARS_COL_NAME, USERS_DB_NAME } = require('../models/users.constants');
-const { addUser, authenticate, canLogIn, deleteApiKey, generateApiKey,
-	getUserByUsername, updatePassword, updateProfile, updateResetPasswordToken, verify } = require('../models/users');
-const { fileExists, getFile, storeFile } = require('../services/filesManager');
+const { addUser, authenticate, deleteApiKey, generateApiKey,
+	getUserByUsername, linkToSso, removeUser, unlinkFromSso, updatePassword, updateProfile, updateResetPasswordToken, verify } = require('../models/users');
+const { fileExists, getFile, removeFile, storeFile } = require('../services/filesManager');
 const { isEmpty, removeFields } = require('../utils/helper/objects');
 const config = require('../utils/config');
 const { events } = require('../services/eventsManager/eventsManager.constants');
 const { generateHashString } = require('../utils/helper/strings');
 const { generateUserHash } = require('../services/intercom');
 const { publish } = require('../services/eventsManager/eventsManager');
+const { removeAllUserNotifications } = require('../models/notifications');
+const { removeAllUserRecords } = require('../models/loginRecords');
 const { sendEmail } = require('../services/mailer');
 const { templates } = require('../services/mailer/mailer.constants');
 
 Users.signUp = async (newUserData) => {
-	const token = generateHashString();
-	await addUser({ ...newUserData, token });
-	await sendEmail(templates.VERIFY_USER.name, newUserData.email, {
-		token,
-		email: newUserData.email,
-		firstName: newUserData.firstName,
-		username: newUserData.username,
-	});
+	const isSso = !!newUserData.sso;
+	const formattedNewUserData = { ...newUserData };
+	if (isSso) {
+		formattedNewUserData.password = generateHashString();
+	} else {
+		formattedNewUserData.token = generateHashString();
+	}
+
+	await addUser(formattedNewUserData);
+
+	if (isSso) {
+		publish(events.USER_VERIFIED, {
+			username: newUserData.username,
+			email: newUserData.email,
+			fullName: `${newUserData.firstName} ${newUserData.lastName}`,
+			company: newUserData.company,
+			mailListOptOut: newUserData.mailListOptOut,
+		});
+	} else {
+		await sendEmail(templates.VERIFY_USER.name, newUserData.email, {
+			token: formattedNewUserData.token,
+			email: newUserData.email,
+			firstName: newUserData.firstName,
+			username: newUserData.username,
+		});
+	}
 };
 
 Users.verify = async (username, token) => {
@@ -53,10 +73,16 @@ Users.verify = async (username, token) => {
 	});
 };
 
-Users.login = async (username, password) => {
-	await canLogIn(username);
-	return authenticate(username, password);
+Users.remove = async (username) => {
+	await Promise.all([
+		removeAllUserRecords(username),
+		removeAllUserNotifications(username),
+		removeFile(USERS_DB_NAME, AVATARS_COL_NAME, username),
+		removeUser(username),
+	]);
 };
+
+Users.login = authenticate;
 
 Users.getProfileByUsername = async (username) => {
 	const user = await getUserByUsername(username, {
@@ -67,11 +93,12 @@ Users.getProfileByUsername = async (username) => {
 		'customData.apiKey': 1,
 		'customData.billing.billingInfo.company': 1,
 		'customData.billing.billingInfo.countryCode': 1,
+		'customData.sso': 1,
 	});
 
 	const { customData } = user;
 
-	const hasAvatar = await fileExists(username);
+	const hasAvatar = await fileExists(USERS_DB_NAME, AVATARS_COL_NAME, username);
 
 	const intercomRef = generateUserHash(customData.email);
 
@@ -85,6 +112,7 @@ Users.getProfileByUsername = async (username) => {
 		company: customData.billing?.billingInfo?.company,
 		countryCode: customData.billing?.billingInfo?.countryCode,
 		...(intercomRef ? { intercomRef } : {}),
+		...(customData.sso ? { sso: customData.sso.type } : {}),
 	};
 };
 
@@ -126,5 +154,9 @@ Users.generateResetPasswordToken = async (username) => {
 };
 
 Users.updatePassword = updatePassword;
+
+Users.unlinkFromSso = unlinkFromSso;
+
+Users.linkToSso = linkToSso;
 
 module.exports = Users;

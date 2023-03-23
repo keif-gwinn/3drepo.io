@@ -23,14 +23,14 @@ import { RevisionsListItemAuthor } from '@components/shared/revisionDetails/comp
 import { RevisionsListItemCode } from '@components/shared/revisionDetails/components/revisionsListItemCode';
 import { RevisionsListItemButton } from '@components/shared/revisionDetails/components/revisionsListItemButton';
 import { IRevision } from '@/v5/store/revisions/revisions.types';
-import { RevisionsActionsDispatchers } from '@/v5/services/actionsDispatchers/revisionsActions.dispatchers';
-import { Display } from '@/v5/ui/themes/media';
+import { RevisionsActionsDispatchers } from '@/v5/services/actionsDispatchers';
 import { formatDate } from '@/v5/services/intl';
 import { viewerRoute } from '@/v5/services/routing/routing';
 import { DashboardParams } from '@/v5/ui/routes/routes.constants';
 import { FormattedMessage } from 'react-intl';
 import { Tooltip } from '@mui/material';
 import { getRevisionFileUrl } from '@/v5/services/api/revisions';
+import { ContainersHooksSelectors } from '@/v5/services/selectorsHooks';
 import { Container, DownloadButton, DownloadIcon } from './revisionsListItem.styles';
 
 type IRevisionsListItem = {
@@ -49,39 +49,37 @@ export const RevisionsListItem = ({ revision, containerId, active = false }: IRe
 		RevisionsActionsDispatchers.setVoidStatus(teamspace, project, containerId, tag || revision._id, !voidStatus);
 	};
 
+	const downloadRevision = (e: SyntheticEvent) => {
+		e.preventDefault();
+		window.location.href = getRevisionFileUrl(teamspace, project, containerId, revision._id);
+	};
+	const hasCollaboratorAccess = ContainersHooksSelectors.selectHasCollaboratorAccess(containerId);
+
 	return (
 		<Container to={viewerRoute(teamspace, project, containerId, revision)}>
 			<RevisionsListItemDate width={130} tabletWidth={94} active={active}>
 				{formatDate(timestamp)}
 			</RevisionsListItemDate>
 			<RevisionsListItemAuthor authorName={author} active={active} width={228} tabletWidth={155} />
-			<RevisionsListItemCode
-				tabletWidth={150}
-				onClick={() => {}}
-			>
-				{tag}
-			</RevisionsListItemCode>
-			<RevisionsListItemText
-				hideWhenSmallerThan={Display.Tablet}
-				active={active}
-			>
-				{desc}
-			</RevisionsListItemText>
-			<RevisionsListItemButton onClick={toggleVoidStatus} status={voidStatus} />
-			<Tooltip
-				title={(
-					<FormattedMessage
-						id="revisionDetails.list.item.download.tooltip"
-						defaultMessage="Download revision"
-					/>
-				)}
-			>
-				<a href={getRevisionFileUrl(teamspace, project, containerId, revision._id)}>
-					<DownloadButton>
+			<RevisionsListItemCode width="20%" tabletWidth={150}> {tag} </RevisionsListItemCode>
+			<RevisionsListItemText hideWhenSmallerThan={887} active={active}> {desc} </RevisionsListItemText>
+			<RevisionsListItemButton onClick={toggleVoidStatus} status={voidStatus} disabled={!hasCollaboratorAccess} />
+			{ hasCollaboratorAccess && (
+				<Tooltip
+					title={(
+						<FormattedMessage
+							id="revisionDetails.list.item.download.tooltip"
+							defaultMessage="Download revision"
+						/>
+					)}
+				>
+					<DownloadButton
+						onClick={downloadRevision}
+					>
 						<DownloadIcon />
 					</DownloadButton>
-				</a>
-			</Tooltip>
+				</Tooltip>
+			)}
 		</Container>
 	);
 };

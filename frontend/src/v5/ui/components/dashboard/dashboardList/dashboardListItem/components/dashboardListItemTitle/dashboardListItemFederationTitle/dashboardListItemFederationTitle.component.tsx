@@ -20,26 +20,29 @@ import { UploadStatuses } from '@/v5/store/containers/containers.types';
 import { IFederation } from '@/v5/store/federations/federations.types';
 import { RevisionStatus } from '@/v5/ui/routes/dashboard/projects/containers/containersList/latestRevision/revisionStatus';
 import { DashboardParams } from '@/v5/ui/routes/routes.constants';
-import { IFixedOrGrowContainer } from '@controls/fixedOrGrowContainer/fixedOrGrowContainer.component';
+import { FixedOrGrowContainerProps } from '@controls/fixedOrGrowContainer';
 import { Highlight } from '@controls/highlight';
+import { SearchContext } from '@controls/search/searchContext';
+import { useContext } from 'react';
 import { FormattedMessage } from 'react-intl';
 import { useParams } from 'react-router';
 import { Link } from 'react-router-dom';
 import { DashboardListItemTitle } from '../dashboardListItemTitle.component';
 
-interface IFederationTitle extends IFixedOrGrowContainer {
+interface IFederationTitle extends FixedOrGrowContainerProps {
 	federation: IFederation;
-	filterQuery?: string;
 }
 
 export const DashboardListItemFederationTitle = ({
 	federation,
-	filterQuery = '',
 }: IFederationTitle): JSX.Element => {
 	const { teamspace, project } = useParams<DashboardParams>();
+	const { query: filterQuery } = useContext(SearchContext);
 
 	const { status, desc, name } = federation;
-	const uploadStatus = status === UploadStatuses.OK ? desc : <RevisionStatus status={status} name={name} />;
+	const uploadStatus = status === UploadStatuses.OK
+		? <Highlight search={filterQuery}>{desc}</Highlight>
+		: <RevisionStatus status={status} name={name} />;
 
 	return (
 		<DashboardListItemTitle

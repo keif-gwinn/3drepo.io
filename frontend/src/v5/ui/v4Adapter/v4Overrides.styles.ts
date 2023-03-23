@@ -21,24 +21,28 @@ import { Container as RevisionsSwitchContainer } from '@/v4/routes/viewerGui/com
 import bottomToolbar from './overrides/bottomToolbar.overrides';
 import panelsMenu from './overrides/panelsMenu.overrides';
 import leftPanel from './overrides/leftPanel.overrides';
+import visualSettings from './overrides/visualSettings.overrides';
 import customTable from './overrides/customTable.overrides';
+import newUserForm from './overrides/newUserForm.overrides';
+import invitationsList from './overrides/invitationsList.overrides';
+import inviteUserForm from './overrides/inviteUserForm.overrides';
 import previewDetails from './overrides/preview/previewDetails.overrides';
 import previewItem from './overrides/preview/previewItem.overrides';
 import previewComments from './overrides/preview/previewComments.overrides';
 import bim from './overrides/bim.overrides';
 import avatarPopover from './overrides/avatarPopover.overrides';
-
-import issueSequences from './overrides/cards/issues/sequences.overrides';
-import issueProperties from './overrides/cards/issues/properties.overrides';
-import issueShapes from './overrides/cards/issues/shapes.overrides';
+import issues from './overrides/cards/issues/issues.overrides';
 import safetiBase from './overrides/cards/safetiBase/safetiBase.overrides';
+import sharedStyles from './overrides/cards/sharedStyles/sharedStyles.overrides';
 import colorPicker from './overrides/colorPicker.overrides';
 import groups from './overrides/cards/groups.overrides';
-import issueAttachments from './overrides/cards/issues/attachments.overrides';
 import measurements from './overrides/cards/measurements.overrides';
 import tree from './overrides/cards/tree.overrides';
 import views from './overrides/cards/views.overrides';
 import gis from './overrides/cards/gis.overrides';
+import compare from './overrides/cards/compare.overrides';
+import board from './overrides/dashboard/board.overrides';
+import sequences from './overrides/cards/sequences.overrides';
 
 export const V4OverridesContainer = styled.div`
 	display: flex;
@@ -46,6 +50,9 @@ export const V4OverridesContainer = styled.div`
 	height: 100%;
 
 	${customTable}
+	${newUserForm}
+	${invitationsList}
+	${inviteUserForm}
 
 	${avatarPopover}
 
@@ -53,6 +60,7 @@ export const V4OverridesContainer = styled.div`
 		background-color: ${({ theme }) => theme.palette.primary.light};
 		font-weight: inherit;
 	}
+	${visualSettings}
 
 	${leftPanel}
 	${panelsMenu}
@@ -61,27 +69,25 @@ export const V4OverridesContainer = styled.div`
 	${previewItem}
 	${previewDetails}
 	${previewComments}
-
+	${sharedStyles}
 	${colorPicker}
-
+	
 	${bim}
 	
 	${groups}
 	${tree}
 	${views}
 	${measurements}
-	
-	${issueProperties}
-	${issueSequences}
-	${issueShapes}
-	${issueAttachments}
-
+	${issues}
 	${safetiBase}
-
+	${sequences}
 	${views}
 	${gis}
-
+	${compare}
+	
 	${RevisionsSwitchContainer} {
 		display: none;
 	}
+
+	${board}
 `;

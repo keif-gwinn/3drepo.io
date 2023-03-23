@@ -15,7 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { all, put, takeEvery, takeLatest } from 'redux-saga/effects';
+import { all, put, select, takeEvery, takeLatest } from 'redux-saga/effects';
 import * as API from '@/v5/services/api';
 import {
 	AddFavouriteAction,
@@ -36,8 +36,18 @@ import { prepareFederationsData, prepareFederationSettingsForBackend, prepareFed
 import { DialogsActions } from '@/v5/store/dialogs/dialogs.redux';
 import { formatMessage } from '@/v5/services/intl';
 import { FetchFederationsResponse, FetchFederationViewsResponse } from '@/v5/services/api/federations';
+import { isEqualWith } from 'lodash';
+import { compByColum } from '../store.helpers';
+import { selectFederationById, selectFederations, selectIsListPending } from './federations.selectors';
 
-export function* createFederation({ teamspace, projectId, newFederation, containers }: CreateFederationAction) {
+export function* createFederation({
+	teamspace,
+	projectId,
+	newFederation,
+	containers,
+	onSuccess,
+	onError,
+}: CreateFederationAction) {
 	try {
 		const federationId = yield API.Federations.createFederation({ teamspace, projectId, newFederation });
 		yield put(FederationsActions.createFederationSuccess(projectId, newFederation, federationId));
@@ -45,14 +55,9 @@ export function* createFederation({ teamspace, projectId, newFederation, contain
 			yield put(FederationsActions.updateFederationContainers(teamspace, projectId, federationId, containers));
 		}
 		yield put(FederationsActions.fetchFederationStats(teamspace, projectId, federationId));
+		onSuccess();
 	} catch (error) {
-		yield put(DialogsActions.open('alert', {
-			currentActions: formatMessage({
-				id: 'federation.create.error',
-				defaultMessage: 'trying to create federation',
-			}),
-			error,
-		}));
+		onError(error);
 	}
 }
 
@@ -89,8 +94,12 @@ export function* fetchFederations({ teamspace, projectId }: FetchFederationsActi
 			projectId,
 		});
 		const federationsWithoutStats = prepareFederationsData(federations);
+		const storedFederations = yield select(selectFederations);
+		const isPending = yield select(selectIsListPending);
 
-		yield put(FederationsActions.fetchFederationsSuccess(projectId, federationsWithoutStats));
+		if (isPending || !isEqualWith(storedFederations, federationsWithoutStats, compByColum(['_id', 'name', 'role', 'isFavourite']))) {
+			yield put(FederationsActions.fetchFederationsSuccess(projectId, federationsWithoutStats));
+		}
 
 		yield all(
 			federations.map(
@@ -110,7 +119,16 @@ export function* fetchFederationStats({ teamspace, projectId, federationId }: Fe
 		const stats: FederationStats = yield API.Federations.fetchFederationStats({
 			teamspace, projectId, federationId,
 		});
-		yield put(FederationsActions.fetchFederationStatsSuccess(projectId, federationId, stats));
+
+		const federation = yield select(selectFederationById, federationId);
+
+		const sameTickets = stats?.tickets?.issues === federation?.issues
+							&& stats?.tickets?.risks === federation?.risks;
+		const defaultStat = { desc: '', code: '', containers: [], status: 'ok' };
+
+		if (!isEqualWith(federation, { ...defaultStat, ...stats }, compByColum(['name', 'code', 'desc', 'containers', 'status'])) || !sameTickets) {
+			yield put(FederationsActions.fetchFederationStatsSuccess(projectId, federationId, stats));
+		}
 	} catch (error) {
 		yield put(DialogsActions.open('alert', {
 			currentActions: 'trying to fetch federations',
@@ -161,7 +179,12 @@ export function* fetchFederationSettings({
 }
 
 export function* updateFederationSettings({
-	teamspace, projectId, federationId, settings,
+	teamspace,
+	projectId,
+	federationId,
+	settings,
+	onSuccess,
+	onError,
 }: UpdateFederationSettingsAction) {
 	try {
 		const rawSettings = prepareFederationSettingsForBackend(settings);
@@ -169,11 +192,9 @@ export function* updateFederationSettings({
 			teamspace, projectId, federationId, settings: rawSettings,
 		});
 		yield put(FederationsActions.updateFederationSettingsSuccess(projectId, federationId, settings));
+		onSuccess();
 	} catch (error) {
-		yield put(DialogsActions.open('alert', {
-			currentActions: 'trying to update federation settings',
-			error,
-		}));
+		onError(error);
 	}
 }
 

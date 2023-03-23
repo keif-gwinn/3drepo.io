@@ -17,8 +17,8 @@
 
 import { ViewerGui } from '@/v4/routes/viewerGui';
 import { useParams } from 'react-router-dom';
-import { ContainersHooksSelectors } from '@/v5/services/selectorsHooks/containersSelectors.hooks';
-import { FederationsHooksSelectors } from '@/v5/services/selectorsHooks/federationsSelectors.hooks';
+import { ContainersHooksSelectors, FederationsHooksSelectors } from '@/v5/services/selectorsHooks';
+import { TicketsCardActionsDispatchers } from '@/v5/services/actionsDispatchers';
 import { InvalidContainerOverlay, InvalidFederationOverlay } from './invalidViewerOverlay';
 import { ViewerParams } from '../routes.constants';
 import { CheckLatestRevisionReadiness } from './checkLatestRevisionReadiness/checkLatestRevisionReadiness.container';
@@ -26,14 +26,16 @@ import { useContainersData } from '../dashboard/projects/containers/containers.h
 import { useFederationsData } from '../dashboard/projects/federations/federations.hooks';
 
 export const Viewer = () => {
-	const { teamspace, containerOrFederation, revision } = useParams<ViewerParams>();
+	const { teamspace, containerOrFederation, project, revision } = useParams<ViewerParams>();
+	TicketsCardActionsDispatchers.resetState();
 
 	useContainersData();
 	useFederationsData();
 
-	const areStatsPending = FederationsHooksSelectors.selectAreStatsPending();
-	const isListPending = FederationsHooksSelectors.selectIsListPending();
-	const isLoading = areStatsPending || isListPending;
+	const areFederationStatsPending = FederationsHooksSelectors.selectAreStatsPending();
+	const isFederationListPending = FederationsHooksSelectors.selectIsListPending();
+	const areContainersPending = ContainersHooksSelectors.selectAreStatsPending();
+	const isLoading = areFederationStatsPending || isFederationListPending || areContainersPending;
 
 	const selectedContainer = ContainersHooksSelectors.selectContainerById(containerOrFederation);
 	const selectedFederation = FederationsHooksSelectors.selectFederationById(containerOrFederation);
@@ -54,6 +56,7 @@ export const Viewer = () => {
 	const v4Match = {
 		params: {
 			model: containerOrFederation,
+			project,
 			teamspace,
 			revision,
 		},

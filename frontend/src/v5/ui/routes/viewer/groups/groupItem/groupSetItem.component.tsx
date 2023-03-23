@@ -15,12 +15,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 import { isV5 } from '@/v4/helpers/isV5';
-import { GroupsActionsDispatchers } from '@/v5/services/actionsDispatchers/groupsActions.dispatchers';
-import { GroupsHooksSelectors } from '@/v5/services/selectorsHooks/groupsSelectors.hooks';
+import { GroupsActionsDispatchers } from '@/v5/services/actionsDispatchers';
+import { GroupsHooksSelectors } from '@/v5/services/selectorsHooks';
 import { ChevronButton } from '@controls/chevronButton';
 import { SyntheticEvent } from 'react';
 import { getGroupNamePath } from '../groupsList.helpers';
-import { CollapsibleIconV4, GroupSetName, GroupsSetTreeListItemComponent } from './groupSetItem.styles';
+import { CollapsibleIconV4, GroupSetName, GroupSetTitle, GroupsSetTreeListItemComponent } from './groupSetItem.styles';
 
 const getGroupSetData = (groupSet, overrides, highlights) => {
 	const data = groupSet.children.reduce((partialData, groupOrGroupSet:any) => {
@@ -107,7 +107,10 @@ export const GroupSetItem = ({ groupSet, collapse, children, disabled }) => {
 			$padding={depth === 1}
 		>
 			<CollapsibleIcon $collapsed={hidden} />
-			<GroupSetName>{groupSet.name} ({descendants.length}) </GroupSetName>
+			<GroupSetName>
+				<GroupSetTitle>{groupSet.name}</GroupSetTitle>
+				({descendants.length})
+			</GroupSetName>
 		</GroupsSetTreeListItemComponent>
 	);
 };

@@ -25,4 +25,20 @@ Objects.removeFields = _.omit;
 
 Objects.isEmpty = _.isEmpty;
 
+Objects.isEqual = _.isEqual;
+
+Objects.getNestedProperty = _.get;
+
+Objects.setNestedProperty = _.set;
+
+Objects.deleteIfUndefined = (obj, includeNull) => {
+	const res = { ...obj };
+	Object.keys(obj).forEach((key) => {
+		const toDitch = obj[key] === undefined || (includeNull && obj[key] === null);
+		if (toDitch) delete res[key];
+	});
+
+	return res;
+};
+
 module.exports = Objects;

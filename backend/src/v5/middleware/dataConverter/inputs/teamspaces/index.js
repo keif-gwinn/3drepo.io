@@ -17,7 +17,7 @@
 
 const { createResponseCode, templates } = require('../../../../utils/responseCodes');
 const { getUserFromSession } = require('../../../../utils/sessions');
-const { hasAccessToTeamspace } = require('../../../../models/teamspaces');
+const { hasAccessToTeamspace } = require('../../../../models/teamspaceSettings');
 const { isTeamspaceAdmin } = require('../../../../utils/permissions/permissions');
 const { respond } = require('../../../../utils/responder');
 
@@ -47,6 +47,20 @@ Teamspaces.canRemoveTeamspaceMember = async (req, res, next) => {
 	}
 
 	await next();
+};
+
+Teamspaces.memberExists = async (req, res, next) => {
+	const { params } = req;
+	const { teamspace, member } = params;
+	try {
+		if (await hasAccessToTeamspace(teamspace, member)) {
+			await next();
+		} else {
+			throw templates.userNotFound;
+		}
+	} catch (err) {
+		respond(req, res, err);
+	}
 };
 
 module.exports = Teamspaces;

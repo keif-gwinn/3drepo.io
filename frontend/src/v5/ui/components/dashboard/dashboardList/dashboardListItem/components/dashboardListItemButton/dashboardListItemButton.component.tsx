@@ -16,12 +16,11 @@
  */
 
 import { Dispatch, ReactNode, SyntheticEvent } from 'react';
-import { FixedOrGrowContainer } from '@controls/fixedOrGrowContainer';
+import { FixedOrGrowContainer, FixedOrGrowContainerProps } from '@controls/fixedOrGrowContainer';
 import { Tooltip } from '@mui/material';
-import { IFixedOrGrowContainer } from '@controls/fixedOrGrowContainer/fixedOrGrowContainer.component';
 import { Button } from './dashboardListItemButton.styles';
 
-interface IDashboardListItemButton extends IFixedOrGrowContainer {
+interface IDashboardListItemButton extends FixedOrGrowContainerProps {
 	onClick: Dispatch<SyntheticEvent>;
 	tooltipTitle?: ReactNode;
 	disabled?: boolean
@@ -36,15 +35,17 @@ export const DashboardListItemButton = ({
 }: IDashboardListItemButton): JSX.Element => (
 	<FixedOrGrowContainer {...containerProps}>
 		<Tooltip title={tooltipTitle}>
-			<Button
-				disabled={disabled}
-				onClick={(event) => {
-					event.stopPropagation();
-					onClick(event);
-				}}
-			>
-				{children}
-			</Button>
+			<span>
+				<Button
+					disabled={disabled}
+					onClick={(event) => {
+						event.stopPropagation();
+						onClick(event);
+					}}
+				>
+					{children}
+				</Button>
+			</span>
 		</Tooltip>
 	</FixedOrGrowContainer>
 );

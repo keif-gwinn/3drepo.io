@@ -15,9 +15,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+const { canRemoveTeamspaceMember, memberExists } = require('../../middleware/dataConverter/inputs/teamspaces');
 const { Router } = require('express');
 const Teamspaces = require('../../processors/teamspaces/teamspaces');
-const { canRemoveTeamspaceMember } = require('../../middleware/dataConverter/inputs/teamspaces');
 const { fileExtensionFromBuffer } = require('../../utils/helper/typeCheck');
 const { hasAccessToTeamspace } = require('../../middleware/permissions/permissions');
 const { isTeamspaceAdmin } = require('../../middleware/permissions/permissions');
@@ -25,27 +25,45 @@ const { respond } = require('../../utils/responder');
 const { templates } = require('../../utils/responseCodes');
 const { validSession } = require('../../middleware/auth');
 
-const getTeamspaceList = (req, res) => {
+const getTeamspaceList = async (req, res) => {
 	const user = req.session.user.username;
-	Teamspaces.getTeamspaceListByUser(user).then((teamspaces) => {
+	try {
+		const teamspaces = await Teamspaces.getTeamspaceListByUser(user);
 		respond(req, res, templates.ok, { teamspaces });
-	}).catch((err) => respond(req, res, err));
+	} catch (err) {
+		/* istanbul ignore next */
+		respond(req, res, err);
+	}
 };
 
-const getTeamspaceMembers = (req, res) => {
+const getTeamspaceMembers = async (req, res) => {
 	const { teamspace } = req.params;
-	Teamspaces.getTeamspaceMembersInfo(teamspace).then((members) => {
+	try {
+		const members = await Teamspaces.getTeamspaceMembersInfo(teamspace);
 		respond(req, res, templates.ok, { members });
-	}).catch(
+	} catch (err) {
 		/* istanbul ignore next */
-		(err) => respond(req, res, err),
-	);
+		respond(req, res, err);
+	}
 };
 
 const getAvatar = async (req, res) => {
 	try {
 		const { teamspace } = req.params;
 		const buffer = await Teamspaces.getAvatar(teamspace);
+		const fileExt = await fileExtensionFromBuffer(buffer);
+		req.params.format = fileExt || 'png';
+		respond(req, res, templates.ok, buffer);
+	} catch (err) {
+		/* istanbul ignore next */
+		respond(req, res, err);
+	}
+};
+
+const getTeamspaceMemberAvatar = async (req, res) => {
+	try {
+		const { member } = req.params;
+		const buffer = await Teamspaces.getAvatar(member);
 		const fileExt = await fileExtensionFromBuffer(buffer);
 		req.params.format = fileExt || 'png';
 		respond(req, res, templates.ok, buffer);
@@ -282,6 +300,39 @@ const establishRoutes = () => {
 	*
 	*/
 	router.delete('/:teamspace/members/:username', hasAccessToTeamspace, canRemoveTeamspaceMember, removeTeamspaceMember);
+
+	/**
+	* @openapi
+	* /teamspaces/{teamspace}/members/{member}/avatar:
+	*   get:
+	*     description: Gets the avatar of a member of the teamspace
+	*     tags: [Teamspaces]
+	*     parameters:
+   	*       - name: teamspace
+	*         description: name of teamspace
+	*         in: path
+	*         required: true
+	*         schema:
+	*           type: string
+   	*       - name: member
+	*         description: username of teamspace member
+	*         in: path
+	*         required: true
+	*         schema:
+	*           type: string
+	*     operationId: getTeamspaceMemberAvatar
+	*     responses:
+	*       401:
+	*         $ref: "#/components/responses/notLoggedIn"
+	*       200:
+	*         description: Gets the avatar of a member of a teamspace
+	*         content:
+	*           image/png:
+	*             schema:
+	*               type: string
+	*               format: binary
+	*/
+	router.get('/:teamspace/members/:member/avatar', hasAccessToTeamspace, memberExists, getTeamspaceMemberAvatar);
 
 	return router;
 };

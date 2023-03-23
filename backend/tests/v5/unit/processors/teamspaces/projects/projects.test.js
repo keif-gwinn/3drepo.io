@@ -16,9 +16,12 @@
  */
 
 const { src } = require('../../../../helper/path');
+const { generateRandomString } = require('../../../../helper/services');
 
 jest.mock('../../../../../../src/v5/models/projectSettings');
 const ProjectsModel = require(`${src}/models/projectSettings`);
+jest.mock('../../../../../../src/v5/models/tickets.templates');
+const TemplatesModel = require(`${src}/models/tickets.templates`);
 jest.mock('../../../../../../src/v5/utils/helper/models');
 const ModelHelper = require(`${src}/utils/helper/models`);
 const Projects = require(`${src}/processors/teamspaces/projects`);
@@ -48,7 +51,7 @@ jest.mock('../../../../../../src/v5/utils/permissions/permissions', () => ({
 	...jest.requireActual('../../../../../../src/v5/utils/permissions/permissions'),
 	isTeamspaceAdmin: jest.fn().mockImplementation((teamspace, user) => user === 'tsAdmin'),
 	hasReadAccessToModel: jest.fn()
-		.mockImplementation((teamspace, model, user) => (modelReadPermissions[model] || []).includes(user)),
+		.mockImplementation((teamspace, project, model, user) => (modelReadPermissions[model] || []).includes(user)),
 }));
 
 const determineProjectListResult = (username) => projectList.flatMap(({ permissions, _id, name, models }) => {
@@ -135,9 +138,29 @@ const testGetProjectSettings = () => {
 	});
 };
 
+const testGetAllTemplates = () => {
+	describe('Get all templates', () => {
+		test('should return all templates available for the project', async () => {
+			const teamspace = generateRandomString();
+			const project = generateRandomString();
+			const showDeprecated = false;
+
+			const expectedOutput = [generateRandomString(), generateRandomString(), generateRandomString()];
+			TemplatesModel.getAllTemplates.mockResolvedValueOnce(expectedOutput);
+
+			await expect(Projects.getAllTemplates(teamspace, project, showDeprecated)).resolves.toEqual(expectedOutput);
+
+			expect(TemplatesModel.getAllTemplates).toHaveBeenCalledTimes(1);
+			expect(TemplatesModel.getAllTemplates).toHaveBeenCalledWith(teamspace, showDeprecated,
+				{ name: 1, code: 1, deprecated: 1 });
+		});
+	});
+};
+
 describe('processors/teamspaces/projects', () => {
 	testGetProjectList();
 	testDeleteProject();
 	testCreateProject();
 	testGetProjectSettings();
+	testGetAllTemplates();
 });

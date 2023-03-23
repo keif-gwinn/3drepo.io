@@ -15,9 +15,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { produceAll } from '@/v5/helpers/reducers.helper';
 import { Action } from 'redux';
 import { createActions, createReducer } from 'reduxsauce';
 import { Constants } from '../../helpers/actions.helper';
+import { OnError, OnSuccess, TeamspaceAndProjectId } from '../store.types';
 import { IProject } from './projects.types';
 
 export const { Types: ProjectsTypes, Creators: ProjectsActions } = createActions({
@@ -27,6 +29,8 @@ export const { Types: ProjectsTypes, Creators: ProjectsActions } = createActions
 	setCurrentProject: ['projectId'],
 	createProject: ['teamspace', 'projectName', 'onSuccess', 'onError'],
 	createProjectSuccess: ['teamspace', 'project'],
+	updateProject: ['teamspace', 'projectId', 'project', 'onSuccess', 'onError'],
+	updateProjectSuccess: ['teamspace', 'projectId', 'project'],
 	deleteProject: ['teamspace', 'projectId', 'onSuccess', 'onError'],
 	deleteProjectSuccess: ['teamspace', 'projectId'],
 }, { prefix: 'PROJECTS/' }) as { Types: Constants<IProjectsActions>; Creators: IProjectsActions };
@@ -36,44 +40,36 @@ export const INITIAL_STATE: IProjectsState = {
 	currentProject: '',
 };
 
-export const fetchSuccess = (state = INITIAL_STATE, { teamspace, projects }): IProjectsState => ({
-	...state,
-	projectsByTeamspace: {
-		...state.projectsByTeamspace,
-		[teamspace]: projects,
-	},
-});
+export const fetchSuccess = (state, { teamspace, projects }: FetchProjectsSuccessAction) => {
+	state.projectsByTeamspace[teamspace] = projects;
+};
 
-export const setCurrentProject = (state = INITIAL_STATE, { projectId }): IProjectsState => ({
-	...state,
-	currentProject: projectId,
-});
+export const setCurrentProject = (state, { projectId }: SetCurrentProjectAction) => {
+	state.currentProject = projectId;
+};
 
-export const createProjectSuccess = (state = INITIAL_STATE, { teamspace, project }): IProjectsState => ({
-	...state,
-	projectsByTeamspace: {
-		...state.projectsByTeamspace,
-		[teamspace]: [
-			...state.projectsByTeamspace[teamspace],
-			project,
-		],
-	},
-});
+export const createProjectSuccess = (state, { teamspace, project }: CreateProjectSuccessAction) => {
+	state.projectsByTeamspace[teamspace].push(project);
+};
 
-export const deleteProjectSuccess = (state = INITIAL_STATE, { teamspace, projectId }): IProjectsState => ({
-	...state,
-	projectsByTeamspace: {
-		...state.projectsByTeamspace,
-		[teamspace]: state.projectsByTeamspace[teamspace].filter((project) => projectId !== project._id),
-	},
-});
+export const updateProjectSuccess = (state, { teamspace, projectId, project }: UpdateProjectSuccessAction) => {
+	const oldProject = state.projectsByTeamspace[teamspace].find(({ _id }) => _id === projectId);
+	Object.assign(oldProject, project);
+};
 
-export const projectsReducer = createReducer(INITIAL_STATE, {
+export const deleteProjectSuccess = (state, { teamspace, projectId }: DeleteProjectSuccessAction) => {
+	state.projectsByTeamspace[teamspace] = state.projectsByTeamspace[teamspace].filter(
+		(project) => projectId !== project._id,
+	);
+};
+
+export const projectsReducer = createReducer(INITIAL_STATE, produceAll({
 	[ProjectsTypes.FETCH_SUCCESS]: fetchSuccess,
 	[ProjectsTypes.SET_CURRENT_PROJECT]: setCurrentProject,
 	[ProjectsTypes.CREATE_PROJECT_SUCCESS]: createProjectSuccess,
+	[ProjectsTypes.UPDATE_PROJECT_SUCCESS]: updateProjectSuccess,
 	[ProjectsTypes.DELETE_PROJECT_SUCCESS]: deleteProjectSuccess,
-}) as (state: IProjectsState, action: any) => IProjectsState;
+})) as (state: IProjectsState, action: any) => IProjectsState;
 
 /**
  * Types
@@ -82,15 +78,24 @@ export interface IProjectsState {
 	projectsByTeamspace: Record<string, IProject[]>;
 	currentProject: string;
 }
-
-export type CreateProjectAction = Action<'CREATE_PROJECT'> & { teamspace: string, projectName: string };
-export type CreateProjectSuccessAction = Action<'CREATE_PROJECT_SUCCESS'> & { project: IProject };
+export type FetchProjectsAction = Action<'FETCH_PROJECTS'> & { teamspace: string };
+export type FetchProjectsSuccessAction = Action<'FETCH_PROJECTS_SUCCESS'> & { teamspace: string, projects: IProject[] };
+export type SetCurrentProjectAction = Action<'SET_CURRENT_PROJECT_SUCCESS'> & { projectId: string };
+export type CreateProjectAction = Action<'CREATE_PROJECT'> & OnSuccess & OnError & {
+	teamspace: string,
+	projectName: string,
+};
+export type CreateProjectSuccessAction = Action<'CREATE_PROJECT_SUCCESS'> & { teamspace: string, project: IProject };
+export type UpdateProjectAction = Action<'UPDATE_PROJECT'> & TeamspaceAndProjectId & OnSuccess & OnError & { project: Partial<IProject> };
+export type UpdateProjectSuccessAction = Action<'UPDATE_PROJECT_SUCCESS'> & TeamspaceAndProjectId & { project: Partial<IProject> };
+export type DeleteProjectAction = Action<'DELETE_PROJECT'> & TeamspaceAndProjectId & OnSuccess & OnError;
+export type DeleteProjectSuccessAction = Action<'DELETE_PROJECT_SUCCESS'> & TeamspaceAndProjectId;
 
 export interface IProjectsActions {
-	fetch: (teamspace: string) => any;
-	fetchSuccess: (teamspace: string, projects: IProject[]) => any;
+	fetch: (teamspace: string) => FetchProjectsAction;
+	fetchSuccess: (teamspace: string, projects: IProject[]) => FetchProjectsSuccessAction;
 	fetchFailure: () => any;
-	setCurrentProject: (projectId: string) => any;
+	setCurrentProject: (projectId: string) => SetCurrentProjectAction;
 	createProject: (
 		teamspace: string,
 		projectName: string,
@@ -98,6 +103,23 @@ export interface IProjectsActions {
 		onError: (error) => void,
 	) => CreateProjectAction;
 	createProjectSuccess: (teamspace: string, project: IProject) => CreateProjectSuccessAction;
-	deleteProject: (teamspace: string, projectId: string, onSuccess: () => void, onError: (error) => void) => any;
-	deleteProjectSuccess: (teamspace: string, projectId: string) => any;
+	updateProject: (
+		teamspace: string,
+		projectId: string,
+		project: Partial<IProject>,
+		onSuccess: () => void,
+		onError: (error) => void,
+	) => UpdateProjectAction;
+	updateProjectSuccess: (
+		teamspace: string,
+		projectId: string,
+		project: Partial<IProject>,
+	) => UpdateProjectSuccessAction;
+	deleteProject: (
+		teamspace: string,
+		projectId: string,
+		onSuccess: () => void,
+		onError: (error) => void,
+	) => DeleteProjectAction;
+	deleteProjectSuccess: (teamspace: string, projectId: string) => DeleteProjectSuccessAction;
 }

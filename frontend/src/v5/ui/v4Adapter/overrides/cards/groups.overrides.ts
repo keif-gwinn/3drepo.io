@@ -33,7 +33,6 @@ import { ColorSelect } from '@/v4/routes/components/colorPicker/colorPicker.styl
 import { Container as PreviewDetailsContainer,
 	CollapsableContent,
 	NotCollapsableContent,
-	ToggleButtonContainer,
 	MainInfoContainer,
 } from '@/v4/routes/viewerGui/components/previewDetails/previewDetails.styles';
 import { Container as FiltersContainer,
@@ -53,6 +52,8 @@ import {
 } from '@/v4/routes/components/textField/textField.styles';
 import { labelButtonPrimaryStyles } from '@controls/button/button.styles';
 import { ViewerPanelContent } from '@/v4/routes/viewerGui/components/viewerPanel/viewerPanel.styles';
+import { StyledTextField as AutoSuggestField } from '@/v4/routes/components/autosuggestField/autosuggestField.styles';
+import { MultipleInputsContainer } from '@/v4/routes/components/criteriaField/components/criteriaValueField/criteriaValueField.styles';
 
 const previewGroupItem = css`
 	${PreviewListItemContainer} {
@@ -101,10 +102,6 @@ const expandedGroupItem = css`
 		margin: 1px 0;
 	}
 
-	${TitleTextField} {
-		margin: 7px 0 -8px;
-	}
-
 	.MuiChip-root {
 		&:hover, 
 		&:active {
@@ -122,21 +119,26 @@ const expandedGroupItem = css`
 			/* TODO - fix after new palette is released */
 			background-color: #F7F8FA;
 		}
+
 		.MuiAccordionDetails-root {
-			background-color: ${({ theme }) => theme.palette.primary.constrast};
 			${CollapsableContent} {
 				padding: 10px;
 				label {
 					font-size: 10px;
 				}
+				.MuiFormControl-root {
+					margin-top: -18px;
+				}
 				${TextFieldContainer} {
 					border: 1px solid ${({ theme }) => theme.palette.base.lightest};
 					border-radius: 5px;
-					background-color: ${({ theme }) => theme.palette.primary.constrast};
+					background-color: ${({ theme }) => theme.palette.primary.contrast};
+
 					label {
 						transform: scale(1);
 						left: 1px;
 						top: -18px;
+						position: absolute;
 					}
 
 					.MuiFormControl-root {
@@ -147,12 +149,16 @@ const expandedGroupItem = css`
 						padding: 0;
 						& > textarea {
 							min-height: 2rem;
-							padding: 5px 10px 0;
+							padding: 5px 10px;
+						}
+						&.Mui-focused fieldset {
+							border: 1px solid ${({ theme }) => theme.palette.primary.main};
+							box-shadow: 0 0 2px ${({ theme }) => theme.palette.primary.main};
 						}
 						fieldset {
 							border: none;
+							box-shadow: none;
 						}
-
 					}
 
 					${FieldWrapper} {
@@ -171,7 +177,6 @@ const expandedGroupItem = css`
 				${StyledFormControl} {
 					.MuiSelect-select {
 						margin-top: 0;
-						height: 26px;
 						color: ${({ theme }) => theme.palette.secondary.main};
 						~ svg {
 							margin-top: 0;
@@ -181,11 +186,11 @@ const expandedGroupItem = css`
 						top: -16px;
 						transform: none;
 						font-size: 10px;
+						left: 1px;
 					}
 				}
 				${DetailsDescription} {
 					margin-top: 30px;
-					background-color: ${({ theme }) => theme.palette.primary.contrast};
 					
 					> div {
 						min-height: 42px !important;
@@ -221,9 +226,6 @@ const expandedGroupItem = css`
 				}
 			}
 		}
-		${ToggleButtonContainer} {
-			background-color: ${({ theme }) => theme.palette.primary.constrast};
-		}
 		${NotCollapsableContent} {
 			padding: 15px 0 0;
 			${FiltersContainer} {
@@ -232,6 +234,8 @@ const expandedGroupItem = css`
 
 				${InputLabel} {
 					padding: 0 15px;
+					top: 23PX;
+					left: 0;
 				}
 				${SelectedCriteria} {
 					padding: 5px 15px 12px;
@@ -247,9 +251,25 @@ const expandedGroupItem = css`
 					border: none;
 					/* TODO - fix after new palette is released */
 					background-color: #F7F8FA;
-					color: #C1C8D5;
+					color: ${({ theme }) => theme.palette.base.lighter};
 					border-top: 1px solid ${({ theme }) => theme.palette.base.lightest};
 					padding: 12px 15px;
+					
+					${AutoSuggestField} {
+						margin: 0;
+
+						.MuiTextField-root {
+							margin: 0;
+						}
+					}
+
+					${MultipleInputsContainer} {
+						margin: 0;
+					}
+
+					.MuiTextField-root {
+						margin-top: 0;
+					}
 
 					.MuiButton-contained {
 						${labelButtonPrimaryStyles}
@@ -267,7 +287,7 @@ const expandedGroupItem = css`
 
 						& ::placeholder {
 							// TODO - fix after new palette is released
-							-webkit-text-fill-color: #C1C8D5;
+							-webkit-text-fill-color: ${({ theme }) => theme.palette.base.lighter};
 							font-weight: 400;
 						}
 
@@ -279,6 +299,7 @@ const expandedGroupItem = css`
 							transform: none;
 							font-size: 10px;
 							top: -2px;
+							left: 1px;
 						}
 
 						.MuiInputBase-input {
@@ -287,12 +308,12 @@ const expandedGroupItem = css`
 						}
 						&.operation {
 							.MuiInputBase-root {
-								margin-top: 16px;
 								.MuiSelect-select {
 									margin-top: 0;
 									padding-left: 12px;
 									~ svg {
 										margin-top: 0;
+										color: ${({ theme }) => theme.palette.base.lighter};
 									}
 								}
 							}

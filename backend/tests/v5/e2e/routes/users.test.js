@@ -15,14 +15,27 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+const { times } = require('lodash');
 const SuperTest = require('supertest');
 const ServiceHelper = require('../../helper/services');
 const { src, image } = require('../../helper/path');
-const { generateRandomString } = require('../../helper/services');
+const { generateRandomString, generateRandomURL } = require('../../helper/services');
 const session = require('supertest-session');
 const fs = require('fs');
+const User = require('../../../../src/v5/models/users');
+const { providers } = require('../../../../src/v5/services/sso/sso.constants');
+const { insertOne } = require('../../../../src/v5/handler/db');
+const { updateProfile } = require('../../../../src/v5/models/users');
 
 const { templates } = require(`${src}/utils/responseCodes`);
+
+const { loginPolicy } = require(`${src}/utils/config`);
+
+jest.mock('../../../../src/v5/services/mailer');
+const Mailer = require(`${src}/services/mailer`);
+
+jest.mock('../../../../src/v5/services/sso/aad');
+const Aad = require(`${src}/services/sso/aad`);
 
 let testSession;
 let server;
@@ -30,6 +43,7 @@ let agent;
 
 // This is the user being used for tests
 const testUser = ServiceHelper.generateUserCredentials();
+const ssoTestUser = ServiceHelper.generateUserCredentials();
 const userWithFsAvatar = ServiceHelper.generateUserCredentials();
 const userWithGridFsAvatar = ServiceHelper.generateUserCredentials();
 const nonVerifiedUser = ServiceHelper.generateUserCredentials();
@@ -38,8 +52,10 @@ const testUserWithToken = ServiceHelper.generateUserCredentials();
 const testUserWithExpiredToken = ServiceHelper.generateUserCredentials();
 const lockedUser = ServiceHelper.generateUserCredentials();
 const lockedUserWithExpiredLock = ServiceHelper.generateUserCredentials();
-const userWithFailedAttempts = ServiceHelper.generateUserCredentials();
 const userEmail = 'example@email.com';
+const userEmailSso = 'examplesso@email.com';
+const nonVerifiedUserEmail = 'nonverifieduser@email.com';
+const ssoUserId = generateRandomString();
 const userEmail2 = 'example2@email.com';
 const fsAvatarData = generateRandomString();
 const gridFsAvatarData = generateRandomString();
@@ -47,18 +63,31 @@ const validPasswordToken = { token: generateRandomString(), expiredAt: new Date(
 const validEmailToken = { token: generateRandomString(), expiredAt: new Date(2030, 12, 12) };
 const expiredEmailToken = { token: generateRandomString(), expiredAt: new Date(2020, 12, 12) };
 const expiredPasswordToken = { token: generateRandomString(), expiredAt: new Date(2020, 12, 12) };
+const teamspace = { name: ServiceHelper.generateRandomString() };
+
 const setupData = async () => {
+	await ServiceHelper.db.createTeamspace(teamspace.name, [nonVerifiedUser.user], {
+		discretionary: {
+			collaborators: 'unlimited',
+			data: 10,
+			expiryDate: Date.now() + 100000,
+		},
+	});
+
 	await Promise.all([
 		ServiceHelper.db.createUser(testUser, [], { email: userEmail }),
+		ServiceHelper.db.createUser(ssoTestUser, [], {
+			email: userEmailSso, sso: { type: providers.AAD, id: ssoUserId },
+		}),
 		ServiceHelper.db.createUser(userWithFsAvatar, []),
 		ServiceHelper.db.createUser(userWithGridFsAvatar, []),
-		ServiceHelper.db.createUser(nonVerifiedUser, [], {
+		ServiceHelper.db.createUser(nonVerifiedUser, [teamspace.name], {
 			inactive: true,
 			emailVerifyToken: {
 				token: validEmailToken.token,
 				expiredAt: validEmailToken.expiredAt,
 			},
-			permissions: [],
+			email: nonVerifiedUserEmail,
 		}),
 		ServiceHelper.db.createUser(nonVerifiedUserWithExpiredToken, [], {
 			inactive: true,
@@ -66,7 +95,6 @@ const setupData = async () => {
 				token: expiredEmailToken.token,
 				expiredAt: expiredEmailToken.expiredAt,
 			},
-			permissions: [],
 		}),
 		ServiceHelper.db.createUser(testUserWithToken, [], {
 			email: userEmail2,
@@ -80,26 +108,22 @@ const setupData = async () => {
 				token: expiredPasswordToken.token, expiredAt: expiredPasswordToken.expiredAt,
 			},
 		}),
-		ServiceHelper.db.createUser(lockedUser, [], {
-			loginInfo: {
-				failedLoginCount: 10,
-				lastFailedLoginAt: new Date(),
-			},
-		}),
-		ServiceHelper.db.createUser(lockedUserWithExpiredLock, [], {
-			loginInfo: {
-				failedLoginCount: 10,
-				lastFailedLoginAt: new Date('1/1/18'),
-			},
-		}),
-		ServiceHelper.db.createUser(userWithFailedAttempts, [], {
-			loginInfo: {
-				failedLoginCount: 6,
-				lastFailedLoginAt: new Date(),
-			},
-		}),
+		ServiceHelper.db.createUser(lockedUser, []),
+		ServiceHelper.db.createUser(lockedUserWithExpiredLock, []),
+
 		ServiceHelper.db.createAvatar(userWithFsAvatar.user, 'fs', fsAvatarData),
 		ServiceHelper.db.createAvatar(userWithGridFsAvatar.user, 'gridfs', gridFsAvatarData),
+		ServiceHelper.db.addLoginRecords(times(loginPolicy.maxUnsuccessfulLoginAttempts, (count) => ({
+			user: lockedUser.user,
+			loginTime: new Date(Date.now() - count),
+			failed: true,
+		}))),
+		ServiceHelper.db.addLoginRecords(times(loginPolicy.maxUnsuccessfulLoginAttempts, () => ({
+			user: lockedUserWithExpiredLock.user,
+			loginTime: new Date(1 / 1 / 18),
+			failed: true,
+		}))),
+
 	]);
 };
 
@@ -154,7 +178,7 @@ const testLogin = () => {
 			expect(res.body.code).toEqual(templates.incorrectUsernameOrPassword.code);
 		});
 
-		test('should fail with a locked account', async () => {
+		test('should fail when an account is locked', async () => {
 			const res = await agent.post('/v5/login/')
 				.send({ user: lockedUser.user, password: lockedUser.password })
 				.expect(templates.tooManyLoginAttempts.status);
@@ -165,14 +189,6 @@ const testLogin = () => {
 			await agent.post('/v5/login/')
 				.send({ user: lockedUserWithExpiredLock.user, password: lockedUserWithExpiredLock.password })
 				.expect(templates.ok.status);
-		});
-
-		test('should fail with wrong password and many failed login attempts', async () => {
-			const res = await agent.post('/v5/login/')
-				.send({ user: userWithFailedAttempts.user, password: 'wrongPassword' })
-				.expect(templates.incorrectUsernameOrPassword.status);
-			expect(res.body.code).toEqual(templates.incorrectUsernameOrPassword.code);
-			expect(res.body.message).toEqual('Incorrect username or password (Remaining attempts: 3)');
 		});
 	});
 };
@@ -226,15 +242,16 @@ const testGetUsername = () => {
 	});
 };
 
-const formatUserProfile = (user, email, hasAvatar) => ({
+const formatUserProfile = (user, email, hasAvatar = false, sso) => ({
 	username: user.user,
 	firstName: user.basicData.firstName,
 	lastName: user.basicData.lastName,
-	email,
 	apiKey: user.apiKey,
 	hasAvatar,
 	countryCode: user.basicData.billing.billingInfo.countryCode,
 	company: user.basicData.billing.billingInfo.company,
+	...(sso ? { sso } : {}),
+	...(email ? { email } : {}),
 });
 
 const testGetProfile = () => {
@@ -246,7 +263,7 @@ const testGetProfile = () => {
 
 		test('should return the user profile if the user has a session via an API key', async () => {
 			const res = await agent.get(`/v5/user?key=${testUser.apiKey}`).expect(200);
-			expect(res.body).toEqual(formatUserProfile(testUser, userEmail, false));
+			expect(res.body).toEqual(formatUserProfile(testUser, userEmail));
 		});
 
 		test('should return the user profile if the user has a session via an API key and has avatar', async () => {
@@ -264,7 +281,22 @@ const testGetProfile = () => {
 
 			test('should return the user profile if the user is logged in', async () => {
 				const res = await testSession.get('/v5/user/').expect(200);
-				expect(res.body).toEqual(formatUserProfile(testUser, userEmail, false));
+				expect(res.body).toEqual(formatUserProfile(testUser, userEmail));
+			});
+		});
+
+		describe('With valid authentication (SSO user)', () => {
+			beforeAll(async () => {
+				Aad.getUserDetails.mockResolvedValueOnce({ email: userEmailSso, id: ssoUserId });
+				await testSession.get(`/v5/sso/aad/authenticate-post?state=${encodeURIComponent(JSON.stringify({ redirectUri: generateRandomURL() }))}`);
+			});
+			afterAll(async () => {
+				await testSession.post('/v5/logout/');
+			});
+
+			test('should return the user profile if the user is logged in', async () => {
+				const res = await testSession.get('/v5/user/').expect(200);
+				expect(res.body).toEqual(formatUserProfile(ssoTestUser, userEmailSso, false, providers.AAD));
 			});
 		});
 	});
@@ -364,6 +396,29 @@ const testUpdateProfile = () => {
 				expect(updatedProfileRes.body.firstName).toEqual('newName');
 				// change password back to the original
 				await testSession.put('/v5/user/').send({ oldPassword: 'Passport123!', newPassword: testUser.password });
+			});
+		});
+
+		describe('With valid authentication (SSO user)', () => {
+			beforeAll(async () => {
+				Aad.getUserDetails.mockResolvedValueOnce({ email: userEmailSso, id: ssoUserId });
+				await testSession.get(`/v5/sso/aad/authenticate-post?state=${encodeURIComponent(JSON.stringify({ redirectUri: generateRandomURL() }))}`);
+			});
+			afterAll(async () => {
+				await testSession.post('/v5/logout/');
+			});
+
+			test('should fail if the user tries to update sso fields', async () => {
+				const data = { firstName: generateRandomString(), lastName: generateRandomString() };
+				const res = await testSession.put('/v5/user/').send(data).expect(templates.invalidArguments.status);
+				expect(res.body.code).toEqual(templates.invalidArguments.code);
+			});
+
+			test('should succeed if the user tries to update non sso fields', async () => {
+				const data = { company: generateRandomString(), countryCode: 'GB' };
+				await testSession.put('/v5/user/').send(data).expect(200);
+				const updatedProfileRes = await testSession.get('/v5/user/');
+				expect(updatedProfileRes.body).toEqual(expect.objectContaining(data));
 			});
 		});
 	});
@@ -524,24 +579,37 @@ const testForgotPassword = () => {
 			expect(res.body.code).toEqual(templates.invalidArguments.code);
 		});
 
+		test('should not send email but return ok if user is an SSO user', async () => {
+			await User.linkToSso(ssoTestUser.user, ssoTestUser.basicData.firstName, ssoTestUser.basicData.lastName,
+				userEmailSso, { type: generateRandomString(), id: generateRandomString() });
+			await agent.post('/v5/user/password').send({ user: ssoTestUser.user })
+				.expect(templates.ok.status);
+			await User.unlinkFromSso(ssoTestUser.user, ssoTestUser.password);
+			expect(Mailer.sendEmail).not.toHaveBeenCalled();
+		});
+
 		test('should return ok even if user does not exist', async () => {
 			await agent.post('/v5/user/password').send({ user: 'non existing user' })
 				.expect(templates.ok.status);
+			expect(Mailer.sendEmail).not.toHaveBeenCalled();
 		});
 
 		test('should send forgot password email with valid username', async () => {
 			await agent.post('/v5/user/password').send({ user: testUser.user })
 				.expect(templates.ok.status);
+			expect(Mailer.sendEmail).toHaveBeenCalledTimes(1);
 		});
 
 		test('should send forgot password email with valid email', async () => {
 			await agent.post('/v5/user/password').send({ user: userEmail })
 				.expect(templates.ok.status);
+			expect(Mailer.sendEmail).toHaveBeenCalledTimes(1);
 		});
 
 		test('should send forgot password email with valid email in upper case', async () => {
 			await agent.post('/v5/user/password').send({ user: userEmail.toUpperCase() })
 				.expect(templates.ok.status);
+			expect(Mailer.sendEmail).toHaveBeenCalledTimes(1);
 		});
 	});
 };
@@ -657,6 +725,15 @@ const testSignUp = () => {
 
 const testVerify = () => {
 	describe('Verify a user', () => {
+		afterEach(async () => {
+			// set the user back to inactive
+			await updateProfile(nonVerifiedUser.user, {
+				inactive: true,
+				'emailVerifyToken.token': validEmailToken.token,
+				'emailVerifyToken.expiredAt': validEmailToken.expiredAt,
+			});
+		});
+
 		test('should fail if the user does not exists', async () => {
 			const res = await agent.post('/v5/user/verify').send({ username: 'nonExistingUser', token: validEmailToken })
 				.expect(templates.invalidArguments.status);
@@ -697,11 +774,48 @@ const testVerify = () => {
 			// check that a teamspace has been created
 			const userTeamspaces = await agent.get(`/v5/teamspaces?key=${nonVerifiedUser.apiKey}`)
 				.expect(templates.ok.status);
-			expect(userTeamspaces.body.teamspaces.length).toEqual(1);
+			expect(userTeamspaces.body.teamspaces.length).toEqual(2);
 
 			// trying to verify the user again should fail
 			await agent.post('/v5/user/verify').send({ username: nonVerifiedUser.user, token: validEmailToken.token })
 				.expect(templates.invalidArguments.status);
+		});
+
+		test('should verify the user and have access to inviter\'s teamspace if there is an invitation pending', async () => {
+			const invitation = {
+				_id: nonVerifiedUserEmail,
+				teamSpaces: [
+					{
+						teamspace,
+						job: 'Main Contractor',
+						permissions: {
+							teamspace_admin: true,
+						},
+					},
+				],
+			};
+
+			// adding the invitation
+			insertOne('admin', 'invitations', invitation);
+
+			// verifying the user
+			await agent.post('/v5/user/verify').send({ username: nonVerifiedUser.user, token: validEmailToken.token })
+				.expect(templates.ok.status);
+
+			// the invitation should be deleted after verification
+			await testSession.post('/v5/login/').send({ user: nonVerifiedUser.user, password: nonVerifiedUser.password })
+				.expect(templates.ok.status);
+			const invitationsRes = await testSession.get('/invitations');
+			expect(invitationsRes.body).toEqual({});
+
+			const teamspacesRes = await testSession.get('/v5/teamspaces');
+			const expectedList = [
+				{ name: nonVerifiedUser.user, isAdmin: true },
+				{ name: teamspace.name, isAdmin: true },
+			];
+			expect(teamspacesRes.body.teamspaces.length).toEqual(expectedList.length);
+			expect(teamspacesRes.body.teamspaces).toEqual(expect.arrayContaining(expectedList));
+			await testSession.post('/v5/logout/');
 		});
 	});
 };

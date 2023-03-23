@@ -1,54 +1,39 @@
 name: On review update
 on:
   pull_request:
-    types: [review_requested, review_request_removed]
+    types: [ready_for_review, review_requested, review_request_removed]
   pull_request_review:
-    types: [edited, dismissed, submitted]
-jobs:
-  getPRNumber:
-    name: Get Current PR Number
-    runs-on: ubuntu-latest
-    outputs: 
-      issue-number: ${{ steps.condval.outputs.value }}
-    steps:
-      - uses: haya14busa/action-cond@v1
-        id: condval
-        with:
-          cond: ${{ github.event_name == 'pull_request' }}
-          if_true: ${{ github.event.number }}
-          if_false: ${{ github.event.pull_request.number }}
+    types: [submitted]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
-  getIssueNumber:
-    name: Get Current Issue Number
-    needs: [ getPRNumber ]
+jobs:
+  get-details:
+    name: Get PR and Issue Details
     runs-on: ubuntu-latest
-    outputs: 
+    outputs:
       issue-number: ${{ steps.commitMsgParser.outputs.issue-number }}
-      content-id: ${{ steps.commitMsgParser.outputs.content-id }}
+      issue-content-id: ${{ steps.commitMsgParser.outputs.issue-content-id }}
     steps:
       - name: Extract Issue Number from PR
-        uses: 3drepo/extract-issue-number-from-PR-merge@v1
+        uses: 3drepo/extract-pr-information@v1
         with:
-          pr: ${{ needs.getPRNumber.outputs.issue-number }}
-          base: staging
+          pr: ${{ github.event.pull_request.number }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
         id: commitMsgParser
 
-  checkMergeReady:
+  check-merge-ready:
     name: Ensure all reviewers have approved the PR
     runs-on: ubuntu-latest
+    outputs:
+      approved: ${{ steps.checkReviews.outputs.approved }}
     steps:
-      - uses: haya14busa/action-cond@v1
-        id: condval
-        with:
-          cond: ${{ github.event_name == 'pull_request' }}
-          if_true: ${{ github.event.number }}
-          if_false: ${{ github.event.pull_request.number }}
       - name: Check reviews
         id: checkReviews
-        uses: 3drepo/all-reviewers-approved@v1.0
+        uses: 3drepo/all-reviewers-approved@v1
         with:
-          pr: ${{ steps.condval.outputs.value }}
+          pr: ${{ github.event.pull_request.number }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Update status
         if: ${{ steps.checkReviews.outputs.approved }}
@@ -63,55 +48,81 @@ jobs:
           value: 'Done'
 
 #  if someone has been assigned a reviewer -> change issue status to "awaiting approval"
-  updateProjectTicketStatus:
-    name: Update Project Ticket Status
-    if: failure() # if not reviewer approved let's modify the status.
+  update-project-issue-status:
+    name: Update Project Issue Status
+    if: ${{ always() && needs.check-merge-ready.outputs.approved == '' }} # if not reviewer approved let's modify the status.
     runs-on: ubuntu-latest
-    outputs: 
-      content-id: ${{ needs.getIssueNumber.outputs.content-id }}
-      status: ${{ steps.setStatusOutput.outputs.status }}
-    needs: [ getIssueNumber, checkMergeReady ]
+    outputs:
+      issue-content-id: ${{ needs.get-details.outputs.issue-content-id }}
+      status: ${{ steps.setStatusOutputIssue.outputs.status }}
+    needs: [ get-details, check-merge-ready ]
     steps:
-      - name: Set status message from input 
-        id: setStatusOutput   
+      - name: getStatus
+        uses: haya14busa/action-cond@v1
+        with:
+          cond: ${{ github.event.action == 'submitted' }}
+          if_true:  ${{ github.event.review.state }}
+          if_false: ${{ github.event.action }}
+        id: statusExtractor
+      - name: Set status message for issue
+        id: setStatusOutputIssue
         run: |
-          set -ex 
+          set -ex
           case $ACTION in
-            review_requested ) 
+            changes_requested )
+              echo "status=Address Feedback" >> $GITHUB_OUTPUT
+              ;;
+            review_requested )
               echo "status=Awaiting Approval" >> $GITHUB_OUTPUT
               ;;
-            ready_for_review ) 
+            ready_for_review )
               echo "status=Awaiting Approval" >> $GITHUB_OUTPUT
               ;;
-            opened )
-              echo "status=In Progress" >> $GITHUB_OUTPUT
+            * )
+              echo "Action = $ACTION"
               ;;
-            review_request_removed )
-              echo "status=In Progress" >> $GITHUB_OUTPUT
-              ;;            
           esac
         env:
-          ACTION: ${{ github.event.action }}
-      - name: Update status
-        id: update_status
-        uses: 3drepo/update-project-action@1.0.12
+          ACTION: ${{ steps.statusExtractor.outputs.value }}
+
+      - name: Update status on the Issue
+        if: ${{ steps.setStatusOutputIssue.outputs.status }}
+        id: update_status_issue
+        uses: 3drepo/update-project-action@v1.1
         with:
           github_token: ${{ secrets.PROJ_MANAGEMENT_TOKEN }}
           organization: 3drepo
-          project_number: 1
-          content_id: ${{ needs.getIssueNumber.outputs.content-id }}
+          project_number: 22
+          content_id: ${{ needs.get-details.outputs.issue-content-id }}
           field: Status
-          value: ${{ steps.setStatusOutput.outputs.status }}
-  
-  #Ensure the issue number is in the pull request title.
-  ensureWellFormattedIssueTitle:
-    runs-on: ubuntu-latest
-    name: Ensure a well formatted Issue Title
-    steps:
-    - uses: 3drepo/pr-update-action@v1
-      with:
-        repo-token: "${{ secrets.GITHUB_TOKEN }}"
-        base-branch-regex: '[a-z\d-_.\\/]+'
-        head-branch-regex: 'ISSUE_\d+'
-        lowercase-branch: false
-        title-template: '%headbranch% - '
+          value: ${{ steps.setStatusOutputIssue.outputs.status }}
+
+      - name: Set status message for PR
+        id: setStatusOutputPR
+        run: |
+          set -ex
+          case $ACTION in
+            review_requested )
+              echo "status=To Review" >> $GITHUB_OUTPUT
+              ;;
+            ready_for_review )
+              echo "status=To Review" >> $GITHUB_OUTPUT
+              ;;
+            * )
+              echo "Action = $ACTION"
+              ;;
+          esac
+        env:
+          ACTION: ${{ github.event.action }}
+      - name: Update status on the PR
+        if: ${{ steps.setStatusOutputPR.outputs.status }}
+        id: update_status_pr
+        uses: 3drepo/update-project-action@update-PR
+        with:
+          github_token: ${{ secrets.PROJ_MANAGEMENT_TOKEN }}
+          organization: 3drepo
+          project_number: 22
+          content_id: ${{github.event.pull_request.node_id }}
+          field: Status
+          value: ${{ steps.setStatusOutputPR.outputs.status }}
+

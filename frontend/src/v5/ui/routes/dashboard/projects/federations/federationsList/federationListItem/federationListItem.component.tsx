@@ -15,7 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { FormattedMessage } from 'react-intl';
 import { formatDate, formatMessage } from '@/v5/services/intl';
 
@@ -26,12 +26,9 @@ import {
 	DashboardListItemText,
 } from '@components/dashboard/dashboardList/dashboardListItem/components';
 import { DashboardListItemFederationTitle } from '@components/dashboard/dashboardList/dashboardListItem/components/dashboardListItemTitle';
-import { Highlight } from '@controls/highlight';
-import { Tooltip } from '@mui/material';
 import { FavouriteCheckbox } from '@controls/favouriteCheckbox';
 import { DashboardListItem } from '@components/dashboard/dashboardList';
 import { IFederation } from '@/v5/store/federations/federations.types';
-import { SkeletonListItem } from '@/v5/ui/routes/dashboard/projects/federations/federationsList/skeletonListItem';
 import { Display } from '@/v5/ui/themes/media';
 import { FederationSettingsForm } from '@/v5/ui/routes/dashboard/projects/federations/federationSettingsForm/federationSettingsForm.component';
 import { EditFederationModal } from '@/v5/ui/routes/dashboard/projects/federations/editFederationModal/editFederationModal.component';
@@ -39,7 +36,7 @@ import { EditFederationModal } from '@/v5/ui/routes/dashboard/projects/federatio
 import { useParams } from 'react-router-dom';
 import { DashboardParams } from '@/v5/ui/routes/routes.constants';
 import { enableRealtimeFederationNewRevision, enableRealtimeFederationRemoved, enableRealtimeFederationUpdateSettings } from '@/v5/services/realtime/federation.events';
-import { DialogsActionsDispatchers } from '@/v5/services/actionsDispatchers/dialogsActions.dispatchers';
+import { DialogsActionsDispatchers, FederationsActionsDispatchers } from '@/v5/services/actionsDispatchers';
 import { prefixBaseDomain, viewerRoute } from '@/v5/services/routing/routing';
 import { combineSubscriptions } from '@/v5/services/realtime/realtime.service';
 import { FederationEllipsisMenu } from './federationEllipsisMenu/federationEllipsisMenu.component';
@@ -50,23 +47,14 @@ const MODALS = {
 	none: 'none',
 };
 interface IFederationListItem {
-	index: number;
 	federation: IFederation;
-	filterQuery: string;
-	onFavouriteChange: (id: string, value: boolean) => void;
 }
 
-export const FederationListItem = ({
-	index,
+export const FederationListItem = memo(({
 	federation,
-	filterQuery,
-	onFavouriteChange,
 }: IFederationListItem): JSX.Element => {
 	const { teamspace, project } = useParams<DashboardParams>();
 
-	if (federation.hasStatsPending) {
-		return <SkeletonListItem delay={index / 10} key={federation._id} />;
-	}
 	const [openModal, setOpenModal] = useState(MODALS.none);
 	const closeModal = () => setOpenModal(MODALS.none);
 
@@ -81,6 +69,14 @@ export const FederationListItem = ({
 			title,
 			link,
 		});
+	};
+
+	const onChangeFavourite = ({ currentTarget: { checked } }) => {
+		if (checked) {
+			FederationsActionsDispatchers.addFavourite(teamspace, project, federation._id);
+		} else {
+			FederationsActionsDispatchers.removeFavourite(teamspace, project, federation._id);
+		}
 	};
 
 	useEffect(() => combineSubscriptions(
@@ -98,7 +94,6 @@ export const FederationListItem = ({
 					<DashboardListItemFederationTitle
 						minWidth={90}
 						federation={federation}
-						filterQuery={filterQuery}
 					/>
 					<DashboardListItemButton
 						hideWhenSmallerThan={1080}
@@ -114,7 +109,7 @@ export const FederationListItem = ({
 					>
 						<FormattedMessage
 							id="federations.list.item.issues"
-							defaultMessage="{count} issues"
+							defaultMessage="{count, plural, =0 {No issues} one {# issue} other {# issues}}"
 							values={{ count: federation.issues }}
 						/>
 					</DashboardListItemButton>
@@ -132,7 +127,7 @@ export const FederationListItem = ({
 					>
 						<FormattedMessage
 							id="federations.list.item.risks"
-							defaultMessage="{count} risks"
+							defaultMessage="{count, plural, =0 {No risks} one {# risk} other {# risks}}"
 							values={{ count: federation.risks }}
 						/>
 					</DashboardListItemButton>
@@ -146,37 +141,21 @@ export const FederationListItem = ({
 					>
 						<FormattedMessage
 							id="federations.list.item.containers"
-							defaultMessage="{count} containers"
+							defaultMessage="{count, plural, =0 {No containers} one {# container} other {# containers}}"
 							values={{ count: federation.containers.length }}
 						/>
 					</DashboardListItemButton>
 					<DashboardListItemText width={188}>
-						<Highlight search={filterQuery}>
-							{federation.code}
-						</Highlight>
+						{federation.code}
 					</DashboardListItemText>
 					<DashboardListItemText width={97} minWidth={73}>
 						{federation.lastUpdated ? formatDate(federation.lastUpdated) : ''}
 					</DashboardListItemText>
 					<DashboardListItemIcon>
-						<Tooltip
-							title={
-								<FormattedMessage id="federations.list.item.favourite.tooltip" defaultMessage="Add to favourites" />
-							}
-						>
-							<FavouriteCheckbox
-								checked={federation.isFavourite}
-								onClick={(event) => {
-									event.stopPropagation();
-								}}
-								onChange={(event) => {
-									onFavouriteChange(
-										federation._id,
-										!!event.currentTarget.checked,
-									);
-								}}
-							/>
-						</Tooltip>
+						<FavouriteCheckbox
+							checked={federation.isFavourite}
+							onChange={onChangeFavourite}
+						/>
 					</DashboardListItemIcon>
 					<DashboardListItemIcon>
 						<FederationEllipsisMenu
@@ -200,4 +179,4 @@ export const FederationListItem = ({
 			</DashboardListItem>
 		</>
 	);
-};
+});

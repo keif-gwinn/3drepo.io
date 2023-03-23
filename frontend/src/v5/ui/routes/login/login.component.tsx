@@ -15,20 +15,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { AuthActionsDispatchers } from '@/v5/services/actionsDispatchers/authActions.dispatchers';
+import { AuthActionsDispatchers } from '@/v5/services/actionsDispatchers';
 import { Link } from 'react-router-dom';
-import LoginIcon from '@assets/icons/login.svg';
+import LoginIcon from '@assets/icons/outlined/login-outlined.svg';
 import { useForm } from 'react-hook-form';
 import { FormattedMessage } from 'react-intl';
 import { formatMessage } from '@/v5/services/intl';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoginSchema } from '@/v5/validation/userSchemes/loginSchemes';
 import { AuthTemplate } from '@components/authTemplate';
-import { AuthHooksSelectors } from '@/v5/services/selectorsHooks/authSelectors.hooks';
+import { AuthHooksSelectors } from '@/v5/services/selectorsHooks';
 import { SubmitButton } from '@controls/submitButton/submitButton.component';
-import { ForgotPasswordPrompt, OtherOptions, SignUpPrompt, UnhandledError } from './login.styles';
-import { AuthHeading, ErrorMessage, PasswordField, UsernameField } from './components/components.styles';
-import { PASSWORD_FORGOT_PATH, SIGN_UP_PATH } from '../routes.constants';
+import { ForgotPasswordPrompt, OtherOptions, SignUpPrompt, UnhandledErrorInterceptor } from './login.styles';
+import { AuthHeading, ErrorMessage, FormPasswordField, FormUsernameField } from './components/components.styles';
+import { PASSWORD_FORGOT_PATH, RELEASE_NOTES_ROUTE, SIGN_UP_PATH } from '../routes.constants';
 
 const APP_VERSION = ClientConfig.VERSION;
 
@@ -61,25 +61,30 @@ export const Login = () => {
 	return (
 		<AuthTemplate
 			footer={(
-				<Link to="/releaseNotes">
+				<a href={RELEASE_NOTES_ROUTE}>
 					<FormattedMessage id="auth.login.versionFooter" defaultMessage="Version: {version}" values={{ version: APP_VERSION }} />
-				</Link>
+				</a>
 			)}
 		>
 			<form onSubmit={handleSubmit(onSubmit)}>
 				<AuthHeading>
 					<FormattedMessage id="auth.login.heading" defaultMessage="Log in" />
 				</AuthHeading>
-				<UsernameField control={control} />
-				<PasswordField
+				<FormUsernameField
+					control={control}
+					name="username"
+					required
+				/>
+				<FormPasswordField
 					control={control}
 					name="password"
 					label={formatMessage({
 						id: 'auth.login.password',
 						defaultMessage: 'Password',
 					})}
+					required
 				/>
-				<UnhandledError expectedErrorValidators={[isExpectedError]} />
+				<UnhandledErrorInterceptor expectedErrorValidators={[isExpectedError]} />
 				{errorMessage && <ErrorMessage>{errorMessage}</ErrorMessage>}
 				<OtherOptions>
 					<SignUpPrompt>

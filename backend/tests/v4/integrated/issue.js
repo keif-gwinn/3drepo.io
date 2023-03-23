@@ -68,8 +68,10 @@ describe("Issues", function () {
 
 	const bcf = {
 		path: "/../statics/bcf/example1.bcf",
+		withEmptyComment: "/../statics/bcf/emptyComment.bcfzip",
 		withGroupsPath: "/../statics/bcf/withGroups.bcf",
 		invalidFile: "/../statics/bcf/notBCF.txt",
+		solibri: "/../statics/bcf/solibri.bcf",
 		issue1: "75959a60-8ef1-11e6-8d05-9717c0574272",
 		issue2: "8d46d1b0-8ef1-11e6-8d05-9717c0574272"
 	};
@@ -3227,6 +3229,12 @@ describe("Issues", function () {
 				], done);
 			});
 
+			it("with empty comments should succeed", function(done) {
+				agent.post(`/${bcfusername}/${bcfmodel}/issues.bcfzip`)
+					.attach("file", __dirname + bcf.withEmptyComment)
+					.expect(200, done);
+			});
+
 			it("if user is collaborator should succeed", function(done) {
 				async.series([
 					function(done) {
@@ -3372,6 +3380,12 @@ describe("Issues", function () {
 						expect(res.body.value).to.equal(responseCodes.NOT_AUTHORIZED.value);
 						done(err);
 					});
+			});
+
+			it("if file is from Solibri should succeed", function(done) {
+				agent.post(`/${altTeamspace}/${commenterModel}/issues.bcfzip`)
+					.attach("file", __dirname + bcf.solibri)
+					.expect(200, done);
 			});
 		});
 

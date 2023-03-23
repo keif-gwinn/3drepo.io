@@ -16,19 +16,21 @@
  */
 
 import { FormattedMessage } from 'react-intl';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-import { AuthActionsDispatchers } from '@/v5/services/actionsDispatchers/authActions.dispatchers';
-import ContactUsIcon from '@assets/icons/email.svg';
-import InviteAFriendIcon from '@assets/icons/add_user.svg';
-import TeamspacesIcon from '@assets/icons/teamspaces.svg';
-import VisualSettingsIcon from '@assets/icons/settings.svg';
-import SupportCentreIcon from '@assets/icons/question_mark.svg';
+import { AuthActionsDispatchers, DialogsActionsDispatchers } from '@/v5/services/actionsDispatchers';
+import TeamspacesIcon from '@assets/icons/filled/teamspaces-filled.svg';
+import VisualSettingsIcon from '@assets/icons/filled/settings-filled.svg';
 import { DASHBOARD_ROUTE } from '@/v5/ui/routes/routes.constants';
 import { ICurrentUser } from '@/v5/store/currentUser/currentUser.types';
 import { Avatar } from '@controls/avatar';
-import { ActionMenu, ActionMenuSection, ActionMenuItem, ActionMenuTriggerButton, ActionMenuItemLink } from '@controls/actionMenu';
+import { ActionMenuSection, ActionMenuItem, ActionMenuItemLink } from '@controls/actionMenu';
+import { selectSettings, ViewerActions } from '@/v4/modules/viewer';
+import { CurrentUserHooksSelectors } from '@/v5/services/selectorsHooks';
+import { useSelector } from 'react-redux';
+import { dispatch } from '@/v4/modules/store';
 import {
+	ActionMenu,
 	AvatarContainer,
 	AvatarSection,
 	UserFullName,
@@ -38,26 +40,36 @@ import {
 	TruncatableName,
 } from './userMenu.styles';
 import { EditProfileModal } from './editProfileModal/editProfileModal.component';
+import { VisualSettingsModal } from './visualSettingsModal/visualSettingsModal.component';
 
 type UserMenuProps = {
 	user: ICurrentUser;
 };
 
 export const UserMenu = ({ user } : UserMenuProps) => {
-	const onClickSignOut = () => AuthActionsDispatchers.logout();
+	const signOut = () => AuthActionsDispatchers.logout();
 
 	const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
+
+	const visualSettings = useSelector(selectSettings);
+	const currentUser = CurrentUserHooksSelectors.selectCurrentUser().username;
+	const updateSettings = (username, settings) => dispatch(ViewerActions.updateSettings(username, settings));
+	const onClickVisualSettings = () => {
+		DialogsActionsDispatchers.open(VisualSettingsModal, {
+			visualSettings,
+			updateSettings,
+			currentUser,
+		});
+	};
+
+	useEffect(() => {
+		dispatch(ViewerActions.fetchSettings());
+	}, []);
 
 	return (
 		<>
 			<AvatarContainer>
-				<ActionMenu>
-					<ActionMenuTriggerButton>
-						<Avatar
-							user={user}
-							isButton
-						/>
-					</ActionMenuTriggerButton>
+				<ActionMenu TriggerButton={<div><Avatar user={user} isButton /></div>}>
 					<ActionMenuSection>
 						<AvatarSection>
 							<Avatar
@@ -66,7 +78,6 @@ export const UserMenu = ({ user } : UserMenuProps) => {
 							/>
 							<UserFullName>
 								<TruncatableName>{user.firstName}</TruncatableName>
-								&nbsp;
 								<TruncatableName>{user.lastName}</TruncatableName>
 							</UserFullName>
 							<UserUserName>{user.username}</UserUserName>
@@ -92,6 +103,7 @@ export const UserMenu = ({ user } : UserMenuProps) => {
 						</ActionMenuItemLink>
 						<ActionMenuItemLink
 							Icon={VisualSettingsIcon}
+							onClick={onClickVisualSettings}
 						>
 							<FormattedMessage
 								id="userMenu.visualSettings"
@@ -100,34 +112,8 @@ export const UserMenu = ({ user } : UserMenuProps) => {
 						</ActionMenuItemLink>
 					</ActionMenuSection>
 					<ActionMenuSection>
-						<ActionMenuItemLink
-							Icon={SupportCentreIcon}
-						>
-							<FormattedMessage
-								id="userMenu.supportCentre"
-								defaultMessage="Support centre"
-							/>
-						</ActionMenuItemLink>
-						<ActionMenuItemLink
-							Icon={ContactUsIcon}
-						>
-							<FormattedMessage
-								id="userMenu.contactUs"
-								defaultMessage="Contact us"
-							/>
-						</ActionMenuItemLink>
-						<ActionMenuItemLink
-							Icon={InviteAFriendIcon}
-						>
-							<FormattedMessage
-								id="userMenu.inviteAFriend"
-								defaultMessage="Invite a friend"
-							/>
-						</ActionMenuItemLink>
-					</ActionMenuSection>
-					<ActionMenuSection>
 						<ActionMenuItem>
-							<SignOutButton onClick={onClickSignOut}>
+							<SignOutButton onClick={signOut}>
 								<FormattedMessage
 									id="userMenu.logOut"
 									defaultMessage="Log out"
@@ -137,11 +123,12 @@ export const UserMenu = ({ user } : UserMenuProps) => {
 					</ActionMenuSection>
 				</ActionMenu>
 			</AvatarContainer>
-			<EditProfileModal
-				user={user}
-				open={isEditProfileModalOpen}
-				onClose={() => setIsEditProfileModalOpen(false)}
-			/>
+			{isEditProfileModalOpen && (
+				<EditProfileModal
+					user={user}
+					onClose={() => setIsEditProfileModalOpen(false)}
+				/>
+			)}
 		</>
 	);
 };
